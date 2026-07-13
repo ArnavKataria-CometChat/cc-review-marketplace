@@ -9,6 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.cometchat.marketplace.R
 import com.cometchat.marketplace.data.Outcome
 import com.cometchat.marketplace.data.model.Listing
@@ -73,6 +74,11 @@ class ListingDetailActivity : AppCompatActivity() {
     private fun render(l: Listing) {
         binding.progress.visibility = View.GONE
         binding.content.visibility = View.VISIBLE
+        binding.photo.load(l.photos.firstOrNull()) {
+            crossfade(true)
+            placeholder(R.drawable.bg_photo_placeholder)
+            error(R.drawable.bg_photo_placeholder)
+        }
         binding.title.text = l.title
         binding.price.text = formatPrice(l.priceCents)
         binding.category.text = l.category.titleCase()

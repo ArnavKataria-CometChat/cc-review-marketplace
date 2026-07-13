@@ -19,6 +19,8 @@
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:background="@drawable/bg_photo_placeholder"
+            android:scaleType="centerCrop"
+            android:clipToOutline="true"
             android:contentDescription="@string/nav_browse" />
 
         <LinearLayout

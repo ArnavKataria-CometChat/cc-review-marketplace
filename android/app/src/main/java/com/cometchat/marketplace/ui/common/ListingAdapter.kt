@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.cometchat.marketplace.R
 import com.cometchat.marketplace.data.model.Listing
 import com.cometchat.marketplace.databinding.ItemListingBinding
@@ -38,6 +39,11 @@ class ListingAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(listing: Listing) {
+            binding.photo.load(listing.photos.firstOrNull()) {
+                crossfade(true)
+                placeholder(R.drawable.bg_photo_placeholder)
+                error(R.drawable.bg_photo_placeholder)
+            }
             binding.title.text = listing.title
             binding.price.text = formatPrice(listing.priceCents)
             binding.category.text = listing.category.titleCase()
