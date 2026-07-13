@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -15,8 +16,19 @@ import (
 // the README — it is NOT a real credential.
 const DemoPassword = "Password123!"
 
-// Seed populates the store with one account per role plus sample listings, an
-// inquiry, a favorite, and a report so the API is explorable immediately.
+// listingPhotos returns stable placeholder image URLs (Lorem Picsum) so every
+// listing renders a real photo out of the box — no empty "No photo" states.
+func listingPhotos(i int) []string {
+	return []string{
+		fmt.Sprintf("https://picsum.photos/seed/mp-listing-%d/600/400", i),
+		fmt.Sprintf("https://picsum.photos/seed/mp-listing-%d-b/600/400", i),
+	}
+}
+
+// Seed populates the store with a realistic, non-empty dataset: 20 users across
+// all roles, 20 photo-backed listings, plus inquiries, favorites, and reports
+// (including a FLAGGED report — the anchor for the Phase B dispute group) so
+// every screen and role-scoped view is populated on first run.
 func Seed(s Store) {
 	hash, err := auth.HashPassword(DemoPassword)
 	if err != nil {
@@ -39,66 +51,151 @@ func Seed(s Store) {
 		return u
 	}
 
+	// --- 20 users -----------------------------------------------------------
+	// Memorable demo logins (one per role, shown on the login screen) FIRST...
 	buyer := mkUser(models.RoleBuyer, "Bailey Buyer", "buyer@example.com")
 	seller := mkUser(models.RoleSeller, "Sam Seller", "seller@example.com")
 	mkUser(models.RoleSupport, "Sage Support", "support@example.com")
 	mkUser(models.RoleAdmin, "Avery Admin", "admin@example.com")
 
-	mkListing := func(title, desc, category string, cents int) *models.Listing {
+	// ...then padded to 20 with additional sellers and buyers.
+	sellerNames := []string{
+		"Nora Fields", "Diego Marsh", "Priya Rao", "Liam Chen", "Maya Okafor",
+		"Tomas Vidal", "Hana Kim", "Ivan Petrov", "Grace Mwangi",
+	}
+	buyerNames := []string{
+		"Ella Ford", "Omar Haddad", "Ruby Lane", "Kenji Sato",
+		"Sofia Ruiz", "Aaron Blake", "Lena Voss",
+	}
+
+	sellers := []*models.User{seller}
+	for i, n := range sellerNames {
+		sellers = append(sellers, mkUser(models.RoleSeller, n, fmt.Sprintf("seller%d@example.com", i+1)))
+	}
+	buyers := []*models.User{buyer}
+	for i, n := range buyerNames {
+		buyers = append(buyers, mkUser(models.RoleBuyer, n, fmt.Sprintf("buyer%d@example.com", i+1)))
+	}
+	// users total: 4 demo + 9 sellers + 7 buyers = 20.
+
+	// --- 20 listings (photo-backed), round-robin across sellers -------------
+	type spec struct {
+		title, desc, category string
+		cents                 int
+		status                models.ListingStatus
+	}
+	specs := []spec{
+		{"Vintage road bike", "Steel frame, recently serviced, new tires.", "sports", 24500, models.ListingActive},
+		{"Mechanical keyboard", "Tactile brown switches, barely used.", "electronics", 8900, models.ListingActive},
+		{"Oak dining table", "Seats six, solid oak, minor scratches.", "furniture", 15000, models.ListingActive},
+		{"Noise-cancelling headphones", "Over-ear, great battery life.", "electronics", 12900, models.ListingActive},
+		{"Mid-century armchair", "Reupholstered walnut frame.", "furniture", 18500, models.ListingActive},
+		{"Mountain bike helmet", "Size M, MIPS, worn twice.", "sports", 4500, models.ListingActive},
+		{"Espresso machine", "Dual boiler, descaled monthly.", "home", 32000, models.ListingActive},
+		{"Acoustic guitar", "Dreadnought, spruce top, with case.", "music", 21000, models.ListingActive},
+		{"Road running shoes", "Size 10, ~50 miles on them.", "fashion", 5500, models.ListingActive},
+		{"Bookshelf, 5-tier", "White, flat-pack, all screws included.", "furniture", 6000, models.ListingActive},
+		{"DSLR camera", "24MP, two lenses, low shutter count.", "electronics", 47500, models.ListingActive},
+		{"Yoga mat set", "Mat, blocks, and strap.", "sports", 3500, models.ListingActive},
+		{"Ceramic dinnerware", "Service for eight, no chips.", "home", 7800, models.ListingActive},
+		{"Electric scooter", "25km range, folds flat.", "auto", 39900, models.ListingActive},
+		{"Wool overcoat", "Charcoal, size L, dry-cleaned.", "fashion", 9900, models.ListingSold},
+		{"Board game bundle", "Six modern strategy games.", "toys", 6200, models.ListingActive},
+		{"Standing desk", "Electric, dual motor, 120cm.", "furniture", 28000, models.ListingActive},
+		{"Garden tool set", "Spade, fork, shears, gloves.", "garden", 4200, models.ListingActive},
+		{"Vinyl record collection", "40 classic rock LPs.", "music", 15500, models.ListingActive},
+		{"Drone with 4K camera", "Three batteries, hard case.", "electronics", 52000, models.ListingRemoved},
+	}
+
+	listings := make([]*models.Listing, 0, len(specs))
+	for i, sp := range specs {
+		owner := sellers[i%len(sellers)]
 		l := &models.Listing{
 			ID:          uuid.NewString(),
-			SellerID:    seller.ID,
-			Title:       title,
-			Description: desc,
-			PriceCents:  cents,
-			Category:    category,
-			Status:      models.ListingActive,
-			Photos:      []string{},
-			CreatedAt:   now,
+			SellerID:    owner.ID,
+			Title:       sp.title,
+			Description: sp.desc,
+			PriceCents:  sp.cents,
+			Category:    sp.category,
+			Status:      sp.status,
+			Photos:      listingPhotos(i + 1),
+			CreatedAt:   now.Add(time.Duration(-i) * time.Hour),
 			UpdatedAt:   now,
 		}
 		if err := s.CreateListing(l); err != nil {
-			log.Fatalf("seed: create listing: %v", err)
+			log.Fatalf("seed: create listing %q: %v", sp.title, err)
 		}
-		return l
+		listings = append(listings, l)
 	}
 
-	bike := mkListing("Vintage road bike", "Steel frame, recently serviced.", "sports", 24500)
-	mkListing("Mechanical keyboard", "Tactile switches, barely used.", "electronics", 8900)
-	mkListing("Oak dining table", "Seats six, minor scratches.", "furniture", 15000)
-
-	inq := &models.Inquiry{
-		ID:        uuid.NewString(),
-		ListingID: bike.ID,
-		BuyerID:   buyer.ID,
-		SellerID:  seller.ID,
-		Status:    models.InquiryOpen,
-		Message:   "Is the bike still available? Would you take $220?",
-		CreatedAt: now,
-		UpdatedAt: now,
+	// --- inquiries: buyer<->seller threads across the first 12 listings -----
+	inqMsgs := []string{
+		"Is this still available? Would you take a bit less?",
+		"Can you do local pickup this weekend?",
+		"Any scratches or issues not shown in the photos?",
+		"Would you consider shipping it?",
+		"Is the price negotiable for a quick sale?",
 	}
-	if err := s.CreateInquiry(inq); err != nil {
-		log.Fatalf("seed: create inquiry: %v", err)
-	}
-
-	if err := s.AddFavorite(&models.Favorite{UserID: buyer.ID, ListingID: bike.ID, CreatedAt: now}); err != nil {
-		log.Fatalf("seed: add favorite: %v", err)
-	}
-
-	report := &models.Report{
-		ID:         uuid.NewString(),
-		TargetType: models.ReportTargetListing,
-		TargetID:   bike.ID,
-		ReporterID: buyer.ID,
-		Reason:     "Seller stopped responding after payment discussion.",
-		Status:     models.ReportOpen,
-		InquiryID:  inq.ID,
-		CreatedAt:  now,
-		UpdatedAt:  now,
-	}
-	if err := s.CreateReport(report); err != nil {
-		log.Fatalf("seed: create report: %v", err)
+	inquiries := make([]*models.Inquiry, 0)
+	for i := 0; i < 12; i++ {
+		l := listings[i]
+		b := buyers[i%len(buyers)]
+		if b.ID == l.SellerID { // never inquire on your own listing
+			b = buyers[(i+1)%len(buyers)]
+		}
+		inq := &models.Inquiry{
+			ID:        uuid.NewString(),
+			ListingID: l.ID,
+			BuyerID:   b.ID,
+			SellerID:  l.SellerID,
+			Status:    models.InquiryOpen,
+			Message:   inqMsgs[i%len(inqMsgs)],
+			CreatedAt: now.Add(time.Duration(-i) * 30 * time.Minute),
+			UpdatedAt: now,
+		}
+		if err := s.CreateInquiry(inq); err != nil {
+			log.Fatalf("seed: create inquiry: %v", err)
+		}
+		inquiries = append(inquiries, inq)
 	}
 
-	log.Printf("seeded demo data: 4 users (password %q), 3 listings, 1 inquiry, 1 report", DemoPassword)
+	// --- favorites: several buyers save several listings --------------------
+	for i := 0; i < 15; i++ {
+		b := buyers[i%len(buyers)]
+		l := listings[(i*3)%len(listings)]
+		if err := s.AddFavorite(&models.Favorite{UserID: b.ID, ListingID: l.ID, CreatedAt: now}); err != nil {
+			log.Fatalf("seed: add favorite: %v", err)
+		}
+	}
+
+	// --- reports: an open, a resolved, and a FLAGGED one (Phase B dispute
+	//     group anchor: buyer + seller + support on a flagged inquiry) -------
+	reports := []struct {
+		inq    *models.Inquiry
+		reason string
+		status models.ReportStatus
+	}{
+		{inquiries[0], "Seller stopped responding after payment discussion.", models.ReportFlagged},
+		{inquiries[3], "Item description doesn't match the photos.", models.ReportOpen},
+		{inquiries[6], "Resolved after seller issued a refund.", models.ReportResolved},
+	}
+	for _, r := range reports {
+		rep := &models.Report{
+			ID:         uuid.NewString(),
+			TargetType: models.ReportTargetListing,
+			TargetID:   r.inq.ListingID,
+			ReporterID: r.inq.BuyerID,
+			Reason:     r.reason,
+			Status:     r.status,
+			InquiryID:  r.inq.ID,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		}
+		if err := s.CreateReport(rep); err != nil {
+			log.Fatalf("seed: create report: %v", err)
+		}
+	}
+
+	log.Printf("seeded demo data: 20 users (password %q), %d listings (with photos), %d inquiries, 15 favorites, %d reports",
+		DemoPassword, len(listings), len(inquiries), len(reports))
 }
