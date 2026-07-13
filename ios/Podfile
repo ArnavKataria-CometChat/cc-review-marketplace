@@ -1,0 +1,78 @@
+# CocoaPods integration for the CometChat chat + calling SDKs.
+#
+# The app itself carries no CometChat secrets — App ID / Region / auth token all
+# arrive at runtime from the backend's POST /cometchat/token (see ChatService).
+# These pods are just the client SDKs.
+#
+# Deployment target is 17.0 (the app's) — comfortably above the CometChatCallsSDK
+# 5.x floor of iOS 16.
+platform :ios, '17.0'
+use_frameworks!
+
+target 'Marketplace' do
+  pod 'CometChatUIKitSwift', '~> 5.1'   # chat UI kit (pulls CometChatSDK 4.1.x)
+  pod 'CometChatCallsSDK',   '~> 5.0'   # voice/video (pulls CometChatWebRTC)
+
+  # CometChatSDK 4.x links CometChatStarscream (its WebSocket transport) at
+  # runtime but neither the UI Kit nor SDK podspec declares it, so the app builds
+  # clean yet crashes at launch — "Library not loaded: @rpath/CometChatStarscream
+  # .framework", then "Symbol not found: CometChatStarscream.WebSocketEvent..."
+  # once a bare stub is present (gotcha I7 — its "statically linked into
+  # CometChatSDK" premise does not hold here; the symbols are a real external
+  # dependency). Declare the real framework explicitly from CometChat's CDN.
+  pod 'CometChatStarscream', :podspec => 'CometChatStubs/CometChatStarscream.podspec'
+end
+
+# Compile-time-only stub for CometChatCardsSwift: CometChatUIKitSwift's
+# .swiftinterface has `import CometChatCardsSwift`, but no CometChatCardsSwift
+# framework is shipped and (verified via dyld_info) nothing imports its symbols
+# at runtime — the dependency is vestigial. A stub `.swiftmodule` on
+# SWIFT_INCLUDE_PATHS resolves the compile-time import without adding a
+# (crash-inducing) dynamic framework. CometChatStarscream, by contrast, IS a
+# real runtime dependency and is pulled as a real pod above.
+STUB_INCLUDE = '$(SRCROOT)/CometChatStubs'
+
+post_install do |installer|
+  installer.pods_project.targets.each do |t|
+    t.build_configurations.each do |config|
+      # [I2] The CometChatWebRTC pod excludes arm64 for the simulator, which
+      # breaks the arm64 (Apple-silicon) simulator build. The xcframework DOES
+      # ship an ios-arm64_x86_64-simulator slice, so the exclusion is spurious —
+      # clear it on every pod target.
+      config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      # Xcode 15+ sandboxes the pods' resource scripts; CometChat's fail under it.
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      # A couple of CometChat pods declare iOS 11 — below Xcode's supported floor,
+      # which emits a warning on every build. Raise them to the app's floor.
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 13.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      end
+    end
+  end
+
+  # The EXCLUDED_ARCHS line is baked into the generated .xcconfig files (both the
+  # WebRTC pod's and the aggregate Pods-Marketplace.*.xcconfig the APP target
+  # inherits). Deleting the build_setting above does not rewrite those files, so
+  # strip the line directly — this is what makes the exclusion actually gone from
+  # the app target too [I6: clear it on ALL targets, app included, so we don't
+  # ship an x86_64-only app that won't install on Apple-silicon simulators].
+  Dir.glob(File.join(installer.sandbox.root, '**', '*.xcconfig')).each do |path|
+    lines = File.readlines(path)
+    kept = lines.reject { |l| l =~ /^EXCLUDED_ARCHS\[sdk=iphonesimulator\*\]/ }
+    File.write(path, kept.join) if kept.length != lines.length
+  end
+
+  # Add the CardsSwift stub .swiftmodule search path to the APP target via the
+  # aggregate xcconfigs so `import CometChatUIKitSwift` (whose interface imports
+  # the never-shipped CometChatCardsSwift) resolves at compile time [I7].
+  %w[debug release].each do |cfg|
+    path = File.join(installer.sandbox.root, 'Target Support Files',
+                     'Pods-Marketplace', "Pods-Marketplace.#{cfg}.xcconfig")
+    next unless File.exist?(path)
+    contents = File.read(path)
+    next if contents.include?('SWIFT_INCLUDE_PATHS')
+    File.open(path, 'a') do |io|
+      io.puts %(SWIFT_INCLUDE_PATHS = $(inherited) "#{STUB_INCLUDE}")
+    end
+  end
+end

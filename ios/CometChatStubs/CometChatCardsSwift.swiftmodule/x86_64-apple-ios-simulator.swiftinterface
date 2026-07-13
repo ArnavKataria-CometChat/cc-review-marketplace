@@ -1,0 +1,836 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.2.3 effective-5.10 (swiftlang-6.2.3.3.21 clang-1700.6.3.2)
+// swift-module-flags: -target x86_64-apple-ios26.2-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -module-name CometChatCardsSwift
+// swift-module-flags-ignorable:  -formal-cxx-interoperability-mode=off
+import Foundation
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+import os.log
+import os
+public struct CometChatCardActionEvent {
+  public let action: CometChatCardsSwift.CometChatCardAction
+  public let elementId: Swift.String
+  public let cardJson: Swift.String
+  public init(action: CometChatCardsSwift.CometChatCardAction, elementId: Swift.String, cardJson: Swift.String)
+}
+public typealias CometChatCardActionCallback = (CometChatCardsSwift.CometChatCardActionEvent) -> Swift.Void
+final public class CometChatCardElementRegistry {
+  public init()
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardLogger {
+  public static var logLevel: CometChatCardsSwift.CometChatCardLogLevel
+  public static func error(_ message: Swift.String)
+  public static func warning(_ message: Swift.String)
+  public static func verbose(_ message: Swift.String)
+  @objc deinit
+}
+public enum CometChatCardLogLevel : Swift.Int, Swift.Comparable {
+  case none
+  case error
+  case warning
+  case verbose
+  public static func < (lhs: CometChatCardsSwift.CometChatCardLogLevel, rhs: CometChatCardsSwift.CometChatCardLogLevel) -> Swift.Bool
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init?(rawValue: Swift.Int)
+  #endif
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+final public class CometChatCardRenderContext {
+  final public let isDark: Swift.Bool
+  final public let theme: CometChatCardsSwift.CometChatCardDefaultTheme
+  final public let onAction: CometChatCardsSwift.CometChatCardActionCallback?
+  final public let cardJson: Swift.String
+  final public let depth: Swift.Int
+  public static let maxDepth: Swift.Int
+  final public let fontFamily: Swift.String?
+  weak final public var registry: CometChatCardsSwift.CometChatCardElementRegistry?
+  final public let loadingElementIds: Swift.Set<Swift.String>
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(isDark: Swift.Bool, theme: CometChatCardsSwift.CometChatCardDefaultTheme, onAction: CometChatCardsSwift.CometChatCardActionCallback?, cardJson: Swift.String, depth: Swift.Int = 0, fontFamily: Swift.String? = nil, registry: CometChatCardsSwift.CometChatCardElementRegistry? = nil, loadingElementIds: Swift.Set<Swift.String> = [])
+  #endif
+  final public func childContext() -> CometChatCardsSwift.CometChatCardRenderContext
+  final public func font(size: CoreFoundation.CGFloat, weight: UIKit.UIFont.Weight = .regular) -> UIKit.UIFont
+  #if compiler(>=5.3) && $NonescapableTypes
+  final public func font(variant: Swift.String?) -> UIKit.UIFont
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func fontWeight(from string: Swift.String?) -> UIKit.UIFont.Weight
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  final public func resolveColor(_ value: CometChatCardsSwift.CometChatCardColorOrValue?, fallback: CometChatCardsSwift.CometChatCardColorValue? = nil) -> UIKit.UIColor?
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  final public func resolveURL(_ value: CometChatCardsSwift.CometChatCardColorOrValue?) -> Swift.String?
+  #endif
+  final public func renderElement(_ element: CometChatCardsSwift.CometChatCardElement) -> UIKit.UIView
+  final public func renderElements(_ elements: [CometChatCardsSwift.CometChatCardElement]) -> [UIKit.UIView]
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor @preconcurrency public class CometChatCardView : UIKit.UIView {
+  @_Concurrency.MainActor @preconcurrency public var cardJson: Swift.String? {
+    get
+    set
+  }
+  @_Concurrency.MainActor @preconcurrency public var themeMode: CometChatCardsSwift.CometChatCardThemeMode {
+    get
+    set
+  }
+  @_Concurrency.MainActor @preconcurrency public var actionCallback: CometChatCardsSwift.CometChatCardActionCallback?
+  @_Concurrency.MainActor @preconcurrency public var themeOverride: CometChatCardsSwift.CometChatCardThemeOverride? {
+    get
+    set
+  }
+  @_Concurrency.MainActor @preconcurrency public var logLevel: CometChatCardsSwift.CometChatCardLogLevel {
+    get
+    set
+  }
+  @_Concurrency.MainActor @preconcurrency public var containerStyle: CometChatCardsSwift.CometChatCardContainerStyle? {
+    get
+  }
+  @_Concurrency.MainActor @preconcurrency public static let contentSizeDidChangeNotification: Foundation.Notification.Name
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  #if compiler(>=5.3) && $NonescapableTypes
+  @_Concurrency.MainActor @preconcurrency @objc required dynamic public init?(coder: Foundation.NSCoder)
+  #endif
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func invalidateIntrinsicContentSize()
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public var intrinsicContentSize: CoreFoundation.CGSize {
+    @objc get
+  }
+  #if compiler(>=5.3) && $NonescapableTypes
+  @_Concurrency.MainActor @preconcurrency @objc override dynamic public func traitCollectionDidChange(_ previousTraitCollection: UIKit.UITraitCollection?)
+  #endif
+  @_Concurrency.MainActor @preconcurrency public func setElementLoading(_ elementId: Swift.String, loading: Swift.Bool)
+  #if compiler(>=5.3) && $NonescapableTypes
+  @_Concurrency.MainActor @preconcurrency public func getContainerStyle() -> CometChatCardsSwift.CometChatCardContainerStyle?
+  #endif
+  @objc deinit
+}
+public struct CometChatCardTextElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let content: Swift.String
+  public let variant: Swift.String?
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let fontWeight: Swift.String?
+  public let align: Swift.String?
+  public let maxLines: Swift.Int?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, content: Swift.String, variant: Swift.String? = nil, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, fontWeight: Swift.String? = nil, align: Swift.String? = nil, maxLines: Swift.Int? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardTextElement, b: CometChatCardsSwift.CometChatCardTextElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardImageElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let url: CometChatCardsSwift.CometChatCardColorOrValue
+  public let altText: Swift.String?
+  public let fit: Swift.String?
+  public let width: CometChatCardsSwift.CometChatCardDimension?
+  public let height: CometChatCardsSwift.CometChatCardDimension?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, url: CometChatCardsSwift.CometChatCardColorOrValue, altText: Swift.String? = nil, fit: Swift.String? = nil, width: CometChatCardsSwift.CometChatCardDimension? = nil, height: CometChatCardsSwift.CometChatCardDimension? = nil, borderRadius: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardImageElement, b: CometChatCardsSwift.CometChatCardImageElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardIconElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let name: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let url: Swift.String?
+  public let size: CoreFoundation.CGFloat?
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let padding: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, name: CometChatCardsSwift.CometChatCardColorOrValue? = nil, url: Swift.String? = nil, size: CoreFoundation.CGFloat? = nil, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil, padding: CoreFoundation.CGFloat? = nil)
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  public func resolveIconURL(isDark: Swift.Bool) -> Swift.String?
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardIconElement, b: CometChatCardsSwift.CometChatCardIconElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardAvatarElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let imageUrl: Swift.String?
+  public let fallbackInitials: Swift.String?
+  public let size: CoreFoundation.CGFloat?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let fontWeight: Swift.String?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, imageUrl: Swift.String? = nil, fallbackInitials: Swift.String? = nil, size: CoreFoundation.CGFloat? = nil, borderRadius: CoreFoundation.CGFloat? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, fontSize: CoreFoundation.CGFloat? = nil, fontWeight: Swift.String? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardAvatarElement, b: CometChatCardsSwift.CometChatCardAvatarElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardBadgeElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let text: Swift.String
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, text: Swift.String, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil, borderRadius: CoreFoundation.CGFloat? = nil, fontSize: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardBadgeElement, b: CometChatCardsSwift.CometChatCardBadgeElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardDividerElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let thickness: CoreFoundation.CGFloat?
+  public let margin: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, thickness: CoreFoundation.CGFloat? = nil, margin: CoreFoundation.CGFloat? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardDividerElement, b: CometChatCardsSwift.CometChatCardDividerElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardSpacerElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let height: CoreFoundation.CGFloat
+  public init(id: Swift.String, height: CoreFoundation.CGFloat)
+  public static func == (a: CometChatCardsSwift.CometChatCardSpacerElement, b: CometChatCardsSwift.CometChatCardSpacerElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardChipElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let text: Swift.String
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let icon: CometChatCardsSwift.CometChatCardIconReference?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, text: Swift.String, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, icon: CometChatCardsSwift.CometChatCardIconReference? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil, borderRadius: CoreFoundation.CGFloat? = nil, fontSize: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardChipElement, b: CometChatCardsSwift.CometChatCardChipElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardProgressBarElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let value: Swift.Int
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let trackColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let height: CoreFoundation.CGFloat?
+  public let label: Swift.String?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let labelFontSize: CoreFoundation.CGFloat?
+  public let labelColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, value: Swift.Int, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, trackColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, height: CoreFoundation.CGFloat? = nil, label: Swift.String? = nil, borderRadius: CoreFoundation.CGFloat? = nil, labelFontSize: CoreFoundation.CGFloat? = nil, labelColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardProgressBarElement, b: CometChatCardsSwift.CometChatCardProgressBarElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardCodeBlockElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let content: Swift.String
+  public let language: Swift.String?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let textColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let languageLabelFontSize: CoreFoundation.CGFloat?
+  public let languageLabelColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, content: Swift.String, language: Swift.String? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, textColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, borderRadius: CoreFoundation.CGFloat? = nil, fontSize: CoreFoundation.CGFloat? = nil, languageLabelFontSize: CoreFoundation.CGFloat? = nil, languageLabelColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardCodeBlockElement, b: CometChatCardsSwift.CometChatCardCodeBlockElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardMarkdownElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let content: Swift.String
+  public let baseFontSize: CoreFoundation.CGFloat?
+  public let linkColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let lineHeight: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, content: Swift.String, baseFontSize: CoreFoundation.CGFloat? = nil, linkColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, lineHeight: CoreFoundation.CGFloat? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardMarkdownElement, b: CometChatCardsSwift.CometChatCardMarkdownElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardTableElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let columns: [Swift.String]
+  public let rows: [[Swift.String]]
+  public let stripedRows: Swift.Bool?
+  public let headerBackgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let border: Swift.Bool?
+  public let cellPadding: CoreFoundation.CGFloat?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let stripedRowColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, columns: [Swift.String], rows: [[Swift.String]], stripedRows: Swift.Bool? = nil, headerBackgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, border: Swift.Bool? = nil, cellPadding: CoreFoundation.CGFloat? = nil, fontSize: CoreFoundation.CGFloat? = nil, stripedRowColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardTableElement, b: CometChatCardsSwift.CometChatCardTableElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardButtonElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let label: Swift.String
+  public let action: CometChatCardsSwift.CometChatCardAction?
+  public let variant: Swift.String?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let textColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let icon: CometChatCardsSwift.CometChatCardIconReference?
+  public let iconPosition: Swift.String?
+  public let size: CometChatCardsSwift.CometChatCardButtonSize?
+  public let fullWidth: Swift.Bool?
+  public let disabled: Swift.Bool?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, label: Swift.String, action: CometChatCardsSwift.CometChatCardAction? = nil, variant: Swift.String? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, textColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil, borderRadius: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, fontSize: CoreFoundation.CGFloat? = nil, icon: CometChatCardsSwift.CometChatCardIconReference? = nil, iconPosition: Swift.String? = nil, size: CometChatCardsSwift.CometChatCardButtonSize? = nil, fullWidth: Swift.Bool? = nil, disabled: Swift.Bool? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardButtonElement, b: CometChatCardsSwift.CometChatCardButtonElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardIconButtonElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let icon: CometChatCardsSwift.CometChatCardColorOrValue
+  public let action: CometChatCardsSwift.CometChatCardAction?
+  public let size: CoreFoundation.CGFloat?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, icon: CometChatCardsSwift.CometChatCardColorOrValue, action: CometChatCardsSwift.CometChatCardAction? = nil, size: CoreFoundation.CGFloat? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardIconButtonElement, b: CometChatCardsSwift.CometChatCardIconButtonElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardLinkElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let text: Swift.String
+  public let action: CometChatCardsSwift.CometChatCardAction?
+  public let color: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let underline: Swift.Bool?
+  public let fontSize: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, text: Swift.String, action: CometChatCardsSwift.CometChatCardAction? = nil, color: CometChatCardsSwift.CometChatCardColorOrValue? = nil, underline: Swift.Bool? = nil, fontSize: CoreFoundation.CGFloat? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardLinkElement, b: CometChatCardsSwift.CometChatCardLinkElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct CometChatCardRowElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let items: [CometChatCardsSwift.CometChatCardElement]
+  public let gap: CoreFoundation.CGFloat?
+  public let align: Swift.String?
+  public let crossAlign: Swift.String?
+  public let wrap: Swift.Bool?
+  public let scrollable: Swift.Bool?
+  public let peek: CoreFoundation.CGFloat?
+  public let snap: Swift.String?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, items: [CometChatCardsSwift.CometChatCardElement], gap: CoreFoundation.CGFloat? = nil, align: Swift.String? = nil, crossAlign: Swift.String? = nil, wrap: Swift.Bool? = nil, scrollable: Swift.Bool? = nil, peek: CoreFoundation.CGFloat? = nil, snap: Swift.String? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardRowElement, b: CometChatCardsSwift.CometChatCardRowElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct CometChatCardColumnElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let items: [CometChatCardsSwift.CometChatCardElement]
+  public let gap: CoreFoundation.CGFloat?
+  public let align: Swift.String?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, items: [CometChatCardsSwift.CometChatCardElement], gap: CoreFoundation.CGFloat? = nil, align: Swift.String? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardColumnElement, b: CometChatCardsSwift.CometChatCardColumnElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct CometChatCardGridElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let items: [CometChatCardsSwift.CometChatCardElement]
+  public let columns: Swift.Int?
+  public let gap: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, items: [CometChatCardsSwift.CometChatCardElement], columns: Swift.Int? = nil, gap: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardGridElement, b: CometChatCardsSwift.CometChatCardGridElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public enum CometChatCardAccordionHeader : Swift.Codable, Swift.Equatable {
+  case text(Swift.String)
+  case elements([CometChatCardsSwift.CometChatCardElement])
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardAccordionHeader, b: CometChatCardsSwift.CometChatCardAccordionHeader) -> Swift.Bool
+}
+public struct CometChatCardAccordionElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let header: CometChatCardsSwift.CometChatCardAccordionHeader
+  public let headerIcon: CometChatCardsSwift.CometChatCardIconReference?
+  public let body: [CometChatCardsSwift.CometChatCardElement]
+  public let expandedByDefault: Swift.Bool?
+  public let border: Swift.Bool?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let fontSize: CoreFoundation.CGFloat?
+  public let fontWeight: Swift.String?
+  public let borderRadius: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, header: CometChatCardsSwift.CometChatCardAccordionHeader, headerIcon: CometChatCardsSwift.CometChatCardIconReference? = nil, body: [CometChatCardsSwift.CometChatCardElement], expandedByDefault: Swift.Bool? = nil, border: Swift.Bool? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, fontSize: CoreFoundation.CGFloat? = nil, fontWeight: Swift.String? = nil, borderRadius: CoreFoundation.CGFloat? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardAccordionElement, b: CometChatCardsSwift.CometChatCardAccordionElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct CometChatCardTabItem : Swift.Codable, Swift.Equatable {
+  public let label: Swift.String
+  public let content: [CometChatCardsSwift.CometChatCardElement]
+  public init(label: Swift.String, content: [CometChatCardsSwift.CometChatCardElement])
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardTabItem, b: CometChatCardsSwift.CometChatCardTabItem) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct CometChatCardTabsElement : Swift.Codable, Swift.Equatable {
+  public let id: Swift.String
+  public let type: Swift.String
+  public let tabs: [CometChatCardsSwift.CometChatCardTabItem]
+  public let defaultActiveTab: Swift.Int?
+  public let tabAlign: Swift.String?
+  public let tabPadding: CometChatCardsSwift.CometChatCardPadding?
+  public let contentPadding: CometChatCardsSwift.CometChatCardPadding?
+  public let fontSize: CoreFoundation.CGFloat?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(id: Swift.String, tabs: [CometChatCardsSwift.CometChatCardTabItem], defaultActiveTab: Swift.Int? = nil, tabAlign: Swift.String? = nil, tabPadding: CometChatCardsSwift.CometChatCardPadding? = nil, contentPadding: CometChatCardsSwift.CometChatCardPadding? = nil, fontSize: CoreFoundation.CGFloat? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardTabsElement, b: CometChatCardsSwift.CometChatCardTabsElement) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public struct AnyCodable : Swift.Codable, Swift.Equatable {
+  public let value: Any
+  public init(_ value: Any)
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public static func == (lhs: CometChatCardsSwift.AnyCodable, rhs: CometChatCardsSwift.AnyCodable) -> Swift.Bool
+}
+public enum CometChatCardAction : Swift.Codable, Swift.Equatable {
+  case openUrl(url: Swift.String, openIn: Swift.String?)
+  case copyToClipboard(value: Swift.String)
+  case downloadFile(url: Swift.String, filename: Swift.String?)
+  case apiCall(url: Swift.String, method: Swift.String?, headers: [Swift.String : Swift.String]?, body: CometChatCardsSwift.AnyCodable?)
+  case chatWithUser(uid: Swift.String)
+  case chatWithGroup(guid: Swift.String)
+  case sendMessage(text: Swift.String, receiverUid: Swift.String?, receiverGuid: Swift.String?)
+  case initiateCall(callType: Swift.String, uid: Swift.String?, guid: Swift.String?)
+  case customCallback(callbackId: Swift.String, payload: CometChatCardsSwift.AnyCodable?)
+  public var type: Swift.String {
+    get
+  }
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public var isValid: Swift.Bool {
+    get
+  }
+  public static func == (a: CometChatCardsSwift.CometChatCardAction, b: CometChatCardsSwift.CometChatCardAction) -> Swift.Bool
+}
+public enum CometChatCardButtonSize : Swift.Codable, Swift.Equatable {
+  case preset(Swift.String)
+  case custom(CoreFoundation.CGFloat)
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public var height: CoreFoundation.CGFloat {
+    get
+  }
+  public static func == (a: CometChatCardsSwift.CometChatCardButtonSize, b: CometChatCardsSwift.CometChatCardButtonSize) -> Swift.Bool
+}
+public struct CometChatCardColorValue : Swift.Codable, Swift.Equatable {
+  public let light: Swift.String
+  public let dark: Swift.String
+  public init(light: Swift.String, dark: Swift.String)
+  public static func == (a: CometChatCardsSwift.CometChatCardColorValue, b: CometChatCardsSwift.CometChatCardColorValue) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public enum CometChatCardColorOrValue : Swift.Codable, Swift.Equatable {
+  case hex(Swift.String)
+  case themed(CometChatCardsSwift.CometChatCardColorValue)
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardColorOrValue, b: CometChatCardsSwift.CometChatCardColorOrValue) -> Swift.Bool
+}
+public struct CometChatCardContainerStyle : Swift.Codable, Swift.Equatable {
+  public let background: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderRadius: CoreFoundation.CGFloat?
+  public let borderColor: CometChatCardsSwift.CometChatCardColorOrValue?
+  public let borderWidth: CoreFoundation.CGFloat?
+  public let padding: CometChatCardsSwift.CometChatCardPadding?
+  public let maxWidth: CoreFoundation.CGFloat?
+  public let maxHeight: CoreFoundation.CGFloat?
+  public let width: CometChatCardsSwift.CometChatCardDimension?
+  public let height: CometChatCardsSwift.CometChatCardDimension?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(background: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderRadius: CoreFoundation.CGFloat? = nil, borderColor: CometChatCardsSwift.CometChatCardColorOrValue? = nil, borderWidth: CoreFoundation.CGFloat? = nil, padding: CometChatCardsSwift.CometChatCardPadding? = nil, maxWidth: CoreFoundation.CGFloat? = nil, maxHeight: CoreFoundation.CGFloat? = nil, width: CometChatCardsSwift.CometChatCardDimension? = nil, height: CometChatCardsSwift.CometChatCardDimension? = nil)
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardContainerStyle, b: CometChatCardsSwift.CometChatCardContainerStyle) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
+public enum CometChatCardDimension : Swift.Codable, Swift.Equatable {
+  case fixed(CoreFoundation.CGFloat)
+  case auto
+  case percentage(CoreFoundation.CGFloat)
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  #if compiler(>=5.3) && $NonescapableTypes
+  public func resolve(parentSize: CoreFoundation.CGFloat?, defaultValue: CoreFoundation.CGFloat) -> CoreFoundation.CGFloat?
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardDimension, b: CometChatCardsSwift.CometChatCardDimension) -> Swift.Bool
+}
+public enum CometChatCardElement : Swift.Codable, Swift.Equatable {
+  case text(CometChatCardsSwift.CometChatCardTextElement)
+  case image(CometChatCardsSwift.CometChatCardImageElement)
+  case icon(CometChatCardsSwift.CometChatCardIconElement)
+  case avatar(CometChatCardsSwift.CometChatCardAvatarElement)
+  case badge(CometChatCardsSwift.CometChatCardBadgeElement)
+  case divider(CometChatCardsSwift.CometChatCardDividerElement)
+  case spacer(CometChatCardsSwift.CometChatCardSpacerElement)
+  case chip(CometChatCardsSwift.CometChatCardChipElement)
+  case progressBar(CometChatCardsSwift.CometChatCardProgressBarElement)
+  case codeBlock(CometChatCardsSwift.CometChatCardCodeBlockElement)
+  case markdown(CometChatCardsSwift.CometChatCardMarkdownElement)
+  case row(CometChatCardsSwift.CometChatCardRowElement)
+  case column(CometChatCardsSwift.CometChatCardColumnElement)
+  case grid(CometChatCardsSwift.CometChatCardGridElement)
+  case accordion(CometChatCardsSwift.CometChatCardAccordionElement)
+  case tabs(CometChatCardsSwift.CometChatCardTabsElement)
+  case button(CometChatCardsSwift.CometChatCardButtonElement)
+  case iconButton(CometChatCardsSwift.CometChatCardIconButtonElement)
+  case link(CometChatCardsSwift.CometChatCardLinkElement)
+  case table(CometChatCardsSwift.CometChatCardTableElement)
+  case unknown(id: Swift.String, type: Swift.String)
+  public var id: Swift.String {
+    get
+  }
+  public var type: Swift.String {
+    get
+  }
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardElement, b: CometChatCardsSwift.CometChatCardElement) -> Swift.Bool
+}
+public struct CometChatCardIconReference : Swift.Codable, Swift.Equatable {
+  public let name: Swift.String?
+  public let url: Swift.String?
+  public let light: Swift.String?
+  public let dark: Swift.String?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(name: Swift.String? = nil, url: Swift.String? = nil, light: Swift.String? = nil, dark: Swift.String? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  #if compiler(>=5.3) && $NonescapableTypes
+  public func resolveURL(isDark: Swift.Bool) -> Swift.String?
+  #endif
+  public static func == (a: CometChatCardsSwift.CometChatCardIconReference, b: CometChatCardsSwift.CometChatCardIconReference) -> Swift.Bool
+}
+public enum CometChatCardPadding : Swift.Codable, Swift.Equatable {
+  case uniform(CoreFoundation.CGFloat)
+  case perSide(top: CoreFoundation.CGFloat, right: CoreFoundation.CGFloat, bottom: CoreFoundation.CGFloat, left: CoreFoundation.CGFloat)
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public var edgeInsets: UIKit.UIEdgeInsets {
+    get
+  }
+  public static func == (a: CometChatCardsSwift.CometChatCardPadding, b: CometChatCardsSwift.CometChatCardPadding) -> Swift.Bool
+}
+public struct CometChatCardSchema : Swift.Codable, Swift.Equatable {
+  public let version: Swift.String
+  public let body: [CometChatCardsSwift.CometChatCardElement]
+  public let style: CometChatCardsSwift.CometChatCardContainerStyle?
+  public let fallbackText: Swift.String?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(version: Swift.String, body: [CometChatCardsSwift.CometChatCardElement], style: CometChatCardsSwift.CometChatCardContainerStyle? = nil, fallbackText: Swift.String? = nil)
+  #endif
+  public init(from decoder: any Swift.Decoder) throws
+  public static func == (a: CometChatCardsSwift.CometChatCardSchema, b: CometChatCardsSwift.CometChatCardSchema) -> Swift.Bool
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+public struct LossyCodableArray<Element> : Swift.Codable where Element : Swift.Decodable, Element : Swift.Encodable {
+  public let elements: [Element]
+  public init(_ elements: [Element])
+  public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+}
+extension CometChatCardsSwift.LossyCodableArray : Swift.Equatable where Element : Swift.Equatable {
+  public static func == (a: CometChatCardsSwift.LossyCodableArray<Element>, b: CometChatCardsSwift.LossyCodableArray<Element>) -> Swift.Bool
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardAvatarRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardBadgeRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardChipRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardCodeBlockRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardDividerRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardIconRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardImageRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardMarkdownRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardMarkdownParser {
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func parse(_ markdown: Swift.String, baseFontSize: CoreFoundation.CGFloat, textColor: UIKit.UIColor, linkColor: UIKit.UIColor, lineHeight: CoreFoundation.CGFloat?, font: UIKit.UIFont) -> Foundation.NSAttributedString
+  #endif
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardProgressBarRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardSpacerRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardTextRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardTableRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardViewHelper {
+  public static func wrapWithPadding(_ view: UIKit.UIView, padding: CometChatCardsSwift.CometChatCardPadding) -> UIKit.UIView
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func applyBorder(to view: UIKit.UIView, borderColor: UIKit.UIColor?, borderWidth: CoreFoundation.CGFloat?, borderRadius: CoreFoundation.CGFloat?)
+  #endif
+  public static func loadImage(into imageView: UIKit.UIImageView, url: Swift.String, context: CometChatCardsSwift.CometChatCardRenderContext, contentMode: UIKit.UIView.ContentMode = .scaleAspectFill)
+  public static func createShimmerLayer(in view: UIKit.UIView, context: CometChatCardsSwift.CometChatCardRenderContext) -> QuartzCore.CAGradientLayer
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func showPlaceholder(in imageView: UIKit.UIImageView, context: CometChatCardsSwift.CometChatCardRenderContext, altText: Swift.String? = nil)
+  #endif
+  public static func createLoadingSpinner() -> UIKit.UIActivityIndicatorView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardButtonRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardIconButtonRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardLinkRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardAccordionRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardColumnRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardGridRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardRowRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardTabsRenderer : CometChatCardsSwift.CometChatCardElementRenderer {
+  final public func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+  @objc deinit
+}
+public protocol CometChatCardElementRenderer {
+  func render(element: CometChatCardsSwift.CometChatCardElement, context: CometChatCardsSwift.CometChatCardRenderContext) -> UIKit.UIView
+}
+@_hasMissingDesignatedInitializers final public class CometChatCardColorResolver {
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func resolveHex(_ value: CometChatCardsSwift.CometChatCardColorOrValue?, isDark: Swift.Bool, fallback: CometChatCardsSwift.CometChatCardColorValue? = nil) -> Swift.String?
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func resolveColor(_ value: CometChatCardsSwift.CometChatCardColorOrValue?, isDark: Swift.Bool, fallback: CometChatCardsSwift.CometChatCardColorValue? = nil) -> UIKit.UIColor?
+  #endif
+  #if compiler(>=5.3) && $NonescapableTypes
+  public static func resolveURL(_ value: CometChatCardsSwift.CometChatCardColorOrValue?, isDark: Swift.Bool) -> Swift.String?
+  #endif
+  @objc deinit
+}
+extension UIKit.UIColor {
+  #if compiler(>=5.3) && $NonescapableTypes
+  convenience public init?(hex: Swift.String)
+  #endif
+}
+public struct CometChatCardDefaultTheme {
+  public var textColor: CometChatCardsSwift.CometChatCardColorValue
+  public var secondaryTextColor: CometChatCardsSwift.CometChatCardColorValue
+  public var backgroundColor: CometChatCardsSwift.CometChatCardColorValue
+  public var borderColor: CometChatCardsSwift.CometChatCardColorValue
+  public var dividerColor: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonFilledBg: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonFilledText: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonOutlinedBorder: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonOutlinedText: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonTonalBg: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonTonalText: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonTextColor: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonDisabledBg: CometChatCardsSwift.CometChatCardColorValue
+  public var buttonDisabledText: CometChatCardsSwift.CometChatCardColorValue
+  public var progressBarColor: CometChatCardsSwift.CometChatCardColorValue
+  public var progressTrackColor: CometChatCardsSwift.CometChatCardColorValue
+  public var codeBlockBg: CometChatCardsSwift.CometChatCardColorValue
+  public var codeBlockText: CometChatCardsSwift.CometChatCardColorValue
+  public var codeBlockLangLabel: CometChatCardsSwift.CometChatCardColorValue
+  public var chipFilledBg: CometChatCardsSwift.CometChatCardColorValue
+  public var chipFilledText: CometChatCardsSwift.CometChatCardColorValue
+  public var badgeBg: CometChatCardsSwift.CometChatCardColorValue
+  public var badgeText: CometChatCardsSwift.CometChatCardColorValue
+  public var avatarBg: CometChatCardsSwift.CometChatCardColorValue
+  public var avatarText: CometChatCardsSwift.CometChatCardColorValue
+  public var linkColor: CometChatCardsSwift.CometChatCardColorValue
+  public var tabActiveColor: CometChatCardsSwift.CometChatCardColorValue
+  public var tabInactiveColor: CometChatCardsSwift.CometChatCardColorValue
+  public var accordionHeaderBg: CometChatCardsSwift.CometChatCardColorValue
+  public var accordionBorderColor: CometChatCardsSwift.CometChatCardColorValue
+  public var tableHeaderBg: CometChatCardsSwift.CometChatCardColorValue
+  public var tableStripedRowBg: CometChatCardsSwift.CometChatCardColorValue
+  public var shimmerBase: CometChatCardsSwift.CometChatCardColorValue
+  public var shimmerHighlight: CometChatCardsSwift.CometChatCardColorValue
+  public var placeholderIconColor: CometChatCardsSwift.CometChatCardColorValue
+  public struct TypographyStyle {
+    public let fontSize: CoreFoundation.CGFloat
+    public let fontWeight: UIKit.UIFont.Weight
+  }
+  public var typography: [Swift.String : CometChatCardsSwift.CometChatCardDefaultTheme.TypographyStyle]
+  public var fontFamily: Swift.String?
+  public init()
+}
+public enum CometChatCardThemeMode {
+  case auto
+  case light
+  case dark
+  public static func == (a: CometChatCardsSwift.CometChatCardThemeMode, b: CometChatCardsSwift.CometChatCardThemeMode) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public struct CometChatCardThemeOverride {
+  public var textColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var secondaryTextColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var backgroundColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var borderColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var dividerColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var buttonFilledBg: CometChatCardsSwift.CometChatCardColorValue?
+  public var buttonFilledText: CometChatCardsSwift.CometChatCardColorValue?
+  public var progressBarColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var progressTrackColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var codeBlockBg: CometChatCardsSwift.CometChatCardColorValue?
+  public var codeBlockText: CometChatCardsSwift.CometChatCardColorValue?
+  public var linkColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var tabActiveColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var tabInactiveColor: CometChatCardsSwift.CometChatCardColorValue?
+  public var fontFamily: Swift.String?
+  #if compiler(>=5.3) && $NonescapableTypes
+  public init(textColor: CometChatCardsSwift.CometChatCardColorValue? = nil, secondaryTextColor: CometChatCardsSwift.CometChatCardColorValue? = nil, backgroundColor: CometChatCardsSwift.CometChatCardColorValue? = nil, borderColor: CometChatCardsSwift.CometChatCardColorValue? = nil, dividerColor: CometChatCardsSwift.CometChatCardColorValue? = nil, buttonFilledBg: CometChatCardsSwift.CometChatCardColorValue? = nil, buttonFilledText: CometChatCardsSwift.CometChatCardColorValue? = nil, progressBarColor: CometChatCardsSwift.CometChatCardColorValue? = nil, progressTrackColor: CometChatCardsSwift.CometChatCardColorValue? = nil, codeBlockBg: CometChatCardsSwift.CometChatCardColorValue? = nil, codeBlockText: CometChatCardsSwift.CometChatCardColorValue? = nil, linkColor: CometChatCardsSwift.CometChatCardColorValue? = nil, tabActiveColor: CometChatCardsSwift.CometChatCardColorValue? = nil, tabInactiveColor: CometChatCardsSwift.CometChatCardColorValue? = nil, fontFamily: Swift.String? = nil)
+  #endif
+}
+extension CometChatCardsSwift.CometChatCardLogLevel : Swift.Hashable {}
+extension CometChatCardsSwift.CometChatCardLogLevel : Swift.RawRepresentable {}
+extension CometChatCardsSwift.CometChatCardThemeMode : Swift.Equatable {}
+extension CometChatCardsSwift.CometChatCardThemeMode : Swift.Hashable {}

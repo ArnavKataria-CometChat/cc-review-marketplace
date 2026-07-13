@@ -4,8 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.cometchat.marketplace.R
+import com.cometchat.marketplace.chat.ChatManager
 import com.cometchat.marketplace.data.model.Role
+import kotlinx.coroutines.launch
 import com.cometchat.marketplace.databinding.ActivityMainBinding
 import com.cometchat.marketplace.ui.admin.AdminUsersFragment
 import com.cometchat.marketplace.ui.admin.AuditFragment
@@ -53,6 +56,10 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             binding.bottomNav.selectedItemId = binding.bottomNav.menu.getItem(0).itemId
         }
+
+        // Bring CometChat up for this session (fetch token → init → login). Runs
+        // once; chat entry points also call ensureReady defensively.
+        lifecycleScope.launch { ChatManager.ensureReady(this@MainActivity, repo) }
     }
 
     private fun menuForRole(role: Role): Int = when (role) {

@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 SCHEME="Marketplace"
-PROJECT="Marketplace.xcodeproj"
+WORKSPACE="Marketplace.xcworkspace"
 
 echo "==> Verifying iOS client: $SCHEME"
 
@@ -22,6 +22,18 @@ fi
 
 xcodebuild -version
 
+# CometChat (chat + calling) is integrated via CocoaPods, so the build gate runs
+# against the generated .xcworkspace, not the bare .xcodeproj. If the Pods are
+# missing (fresh checkout — Pods/ is gitignored), install them first.
+if [ ! -d "Pods" ] || [ ! -f "$WORKSPACE/contents.xcworkspacedata" ]; then
+  echo "==> Pods not installed — running 'pod install'"
+  if ! command -v pod >/dev/null 2>&1; then
+    echo "ERROR: CocoaPods not found. Install with 'sudo gem install cocoapods'." >&2
+    exit 1
+  fi
+  pod install
+fi
+
 # Pick an available iOS Simulator runtime/device generically so this works on
 # any machine (no hard-coded device name). Fall back to a plain generic dest.
 DESTINATION="generic/platform=iOS Simulator"
@@ -29,7 +41,7 @@ DESTINATION="generic/platform=iOS Simulator"
 echo "==> Building (simulator, no code-signing)"
 set -x
 xcodebuild \
-  -project "$PROJECT" \
+  -workspace "$WORKSPACE" \
   -scheme "$SCHEME" \
   -configuration Debug \
   -sdk iphonesimulator \

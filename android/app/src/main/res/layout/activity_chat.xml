@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  1:1 or group chat surface. The root is a FrameLayout so CometChatIncomingCall
+  can overlay the whole screen when a call arrives (it renders nothing otherwise).
+  Header → list → composer is the standard v6 messaging composition.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.cometchat.uikit.kotlin.presentation.messageheader.ui.CometChatMessageHeader
+            android:id="@+id/messageHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.cometchat.uikit.kotlin.presentation.messagelist.ui.CometChatMessageList
+            android:id="@+id/messageList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.cometchat.uikit.kotlin.presentation.messagecomposer.ui.CometChatMessageComposer
+            android:id="@+id/messageComposer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+
+    <!-- App-root incoming-call overlay: renders nothing until a call arrives. -->
+    <com.cometchat.uikit.kotlin.presentation.incomingcall.CometChatIncomingCall
+        android:id="@+id/incomingCall"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

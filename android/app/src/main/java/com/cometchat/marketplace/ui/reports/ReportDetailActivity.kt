@@ -12,6 +12,7 @@ import com.cometchat.marketplace.R
 import com.cometchat.marketplace.data.Outcome
 import com.cometchat.marketplace.data.remote.ReportDetailResponse
 import com.cometchat.marketplace.databinding.ActivityReportDetailBinding
+import com.cometchat.marketplace.ui.chat.ChatActivity
 import com.cometchat.marketplace.ui.listings.ListingDetailActivity
 import com.cometchat.marketplace.ui.repo
 import com.cometchat.marketplace.ui.toast
@@ -99,6 +100,7 @@ class ReportDetailActivity : AppCompatActivity() {
             val seller = data.seller?.name ?: data.inquiry.sellerId.take(8)
             val flag = if (data.inquiry.flagged) " · ⚠ disputed" else ""
             binding.parties.text = "Buyer: $buyer\nSeller: $seller\nThread status: ${data.inquiry.status}$flag"
+            wireDisputeGroup(data.inquiry.id, data.inquiry.flagged)
         } else {
             binding.threadHeader.visibility = View.GONE
             binding.parties.visibility = View.GONE
@@ -106,6 +108,26 @@ class ReportDetailActivity : AppCompatActivity() {
         }
 
         buildActions(report.status)
+    }
+
+    /**
+     * Dispute group seam. When the inquiry is flagged the backend has provisioned
+     * the buyer + seller + support CometChat group ("dispute-<inquiryId>"); let
+     * support open it to mediate the dispute in-thread (group chat + group call).
+     */
+    private fun wireDisputeGroup(inquiryId: String, flagged: Boolean) {
+        if (flagged) {
+            val guid = "dispute-$inquiryId"
+            binding.groupSeam.text =
+                "Dispute group active (buyer + seller + support).\nTap to open the group chat & call →"
+            binding.groupSeam.isClickable = true
+            binding.groupSeam.setOnClickListener {
+                ChatActivity.startGroup(this, guid, "Dispute")
+            }
+        } else {
+            binding.groupSeam.isClickable = false
+            binding.groupSeam.setOnClickListener(null)
+        }
     }
 
     private fun buildActions(status: String) {

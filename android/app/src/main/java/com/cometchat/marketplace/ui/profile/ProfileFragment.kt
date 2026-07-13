@@ -43,6 +43,7 @@ class ProfileFragment : Fragment() {
             .setTitle("Log out?")
             .setMessage("You'll need to sign in again to continue.")
             .setPositiveButton("Log out") { _, _ ->
+                com.cometchat.marketplace.chat.ChatManager.logout()
                 repo.logout()
                 val intent = Intent(requireContext(), LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

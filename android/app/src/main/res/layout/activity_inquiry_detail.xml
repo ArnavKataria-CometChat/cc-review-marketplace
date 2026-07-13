@@ -108,7 +108,7 @@
                 android:textSize="15sp"
                 android:text="message" />
 
-            <!-- Phase B seam: chat + voice call anchored to this inquiry -->
+            <!-- CometChat: chat + voice/video call anchored to this inquiry -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -137,7 +137,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Real-time chat and voice calling between the buyer and seller arrive in Phase B (CometChat), anchored to this inquiry."
+                        android:text="Chat, voice &amp; video call the other party about this listing. Calling starts from the conversation header."
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 

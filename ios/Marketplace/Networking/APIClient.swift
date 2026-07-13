@@ -131,6 +131,15 @@ final class APIClient: @unchecked Sendable {
         try await request(.GET, "/users/me")
     }
 
+    // MARK: - CometChat
+
+    /// Provision (just-in-time) the caller's CometChat user and mint a fresh
+    /// per-user auth token. The client logs into CometChat with this — it never
+    /// sees the REST API Key.
+    func cometChatToken() async throws -> CometChatTokenResponse {
+        try await request(.POST, "/cometchat/token")
+    }
+
     // MARK: - Listings
 
     func listings(search: String? = nil, category: String? = nil,

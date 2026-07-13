@@ -18,7 +18,8 @@ android {
 
     defaultConfig {
         applicationId = "com.cometchat.marketplace"
-        minSdk = 24
+        // CometChat UIKit v6 requires minSdk 28 (Phase B floor).
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -55,6 +56,12 @@ android {
     }
 }
 
+configurations.all {
+    // The CometChat Chat SDK transitively pulls org.jetbrains:annotations-java5,
+    // which duplicate-clashes with the Kotlin stdlib's org.jetbrains:annotations.
+    exclude(group = "org.jetbrains", module = "annotations-java5")
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -78,6 +85,12 @@ dependencies {
 
     // Image loading for remote listing photos (loads URLs into ImageView).
     implementation("io.coil-kt:coil:2.7.0")
+
+    // CometChat (Phase B): Kotlin Views UI Kit v6 for chat + the Calls SDK peer
+    // dep the kit references at runtime (bundled calling is NOT self-contained —
+    // chatuikit references CometChatCalls$SessionSettingsBuilder from calls-sdk).
+    implementation("com.cometchat:chatuikit-kotlin-android:6.0.+")
+    implementation("com.cometchat:calls-sdk-android:5.0.+")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

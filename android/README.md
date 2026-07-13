@@ -1,4 +1,4 @@
-# Marketplace — Android client (Phase A)
+# Marketplace — Android client (Phase B: CometChat)
 
 Native **Kotlin + Android Views** (not Compose) client for the peer-to-peer
 marketplace. Buyers browse listings and open inquiries with sellers, sellers
@@ -86,6 +86,7 @@ listens on `:8080`). Routes consumed:
 | `POST /auth/login` | Login | `{email,password}` → `{token,user}` |
 | `POST /auth/register` | Register | buyer/seller only → `{token,user}` |
 | `GET /users/me` | Splash | validates the stored token |
+| `POST /cometchat/token` | Chat bootstrap | authed; JIT-provisions the caller's CometChat user and returns `{appId, region, uid, authToken}` — the client logs into the CometChat SDK with this. The REST key stays server-side. |
 | `GET /listings?search=&category=&minPrice=&maxPrice=` | Browse, MyListings, Moderation | active listings |
 | `GET /listings/:id` | Detail, Create(edit) | |
 | `POST /listings` | Create | seller |
@@ -148,15 +149,34 @@ The backend seeds one account per role (password **`Password123!`**):
 ./verify.sh        # runs ./gradlew :app:assembleDebug; exits non-zero on failure
 ```
 
-## Phase B seams (not implemented here)
+## CometChat integration (Phase B)
 
-- **Inquiry thread** = the anchor a CometChat 1:1 chat + voice call will attach
-  to. `InquiryDetailActivity` already shows disabled *Message*/*Call* buttons.
-- **Report → flagged inquiry** = escalation into a buyer+seller+support
-  **group**. `ReportDetailActivity` describes this and drives the backend's
-  `flagged`/`resolved` transitions that toggle `Inquiry.flagged`.
-- **Stable identity:** every user has a stable server-side `{id, role}`
-  (surfaced on the Profile screen) that a Phase B integration maps to a
-  CometChat user. The client would authenticate to CometChat with a
-  backend-issued token — no chat SDK keys live in the app.
+Chat + voice/video calling via the **CometChat Android UI Kit v6** (Kotlin Views,
+`chatuikit-kotlin-android:6.x` + `calls-sdk-android:5.x`).
+
+- **Credential-free client.** No CometChat keys live in the app. After login the
+  client calls `POST /cometchat/token`; `ChatManager` inits the SDK with the
+  returned App ID + Region and logs in with the per-user auth token
+  (`loginWithAuthToken`). The CometChat REST key never leaves the backend.
+- **RBAC / conversation scoping.** The CometChat UID equals the app `userId`;
+  the backend stores the app role on the CometChat user. `InquiryDetailActivity`
+  only lets a thread's **buyer and seller** open the 1:1 conversation, and only
+  with each other (the counterpart UID is derived from the inquiry).
+- **1:1 (inquiry).** *Message*/*Call* open `ChatActivity` for the counterpart;
+  the message header hosts the voice + video call buttons.
+- **Dispute group.** When a report is flagged the backend provisions a
+  `dispute-<inquiryId>` group (buyer + seller + support). `ReportDetailActivity`
+  lets support open it (group chat + group call).
+- **Calling lifecycle.** The Calls SDK is initialized explicitly after chat init;
+  an incoming-call overlay is hosted on the chat surface, and `ChatManager`
+  re-foregrounds the app / tears down the kit's own-task ongoing-call activity on
+  local and remote call-end.
+
+The three `com.cometchat.calls.*` Java files under `app/src/main/java` are
+intentional no-op **stubs** for legacy classes the Chat SDK's `CallManager`
+references but `calls-sdk-android:5.x` dropped — see their header comment.
+
+Local dev over plain HTTP is permitted only for the emulator/localhost hosts via
+`res/xml/network_security_config.xml` (the merged CometChat SDK config otherwise
+disables cleartext to our own backend).
 ```

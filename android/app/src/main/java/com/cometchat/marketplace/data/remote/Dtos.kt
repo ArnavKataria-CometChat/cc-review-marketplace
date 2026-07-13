@@ -78,3 +78,16 @@ data class UsersResponse(val users: List<User> = emptyList())
 data class PatchUserRequest(val banned: Boolean? = null, val role: String? = null)
 
 data class AuditResponse(val audit: List<AuditEntry> = emptyList())
+
+/**
+ * POST /cometchat/token — the backend provisions the caller's CometChat user
+ * (JIT) and mints a short-lived per-user auth token. The REST API Key never
+ * leaves the backend; the client only receives the non-secret App ID + Region
+ * and the token it logs into the CometChat SDK with. [uid] equals the app userId.
+ */
+data class CometChatTokenResponse(
+    val appId: String = "",
+    val region: String = "",
+    val uid: String = "",
+    val authToken: String = "",
+)

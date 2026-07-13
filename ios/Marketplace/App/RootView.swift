@@ -25,8 +25,20 @@ struct RootView: View {
 struct MainTabView: View {
     let user: User
     @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var chat: ChatService
 
     var body: some View {
+        tabs
+            // Bring up CometChat app-wide once we know who's signed in, so the
+            // kit's incoming-call overlay works from any screen. One-shot per
+            // user id — re-fires only on account switch, not on every re-render
+            // (gotcha I1).
+            .task(id: user.id) {
+                await chat.connect(using: session.api)
+            }
+    }
+
+    private var tabs: some View {
         TabView {
             switch user.role {
             case .buyer:

@@ -66,6 +66,7 @@ final class SessionStore: ObservableObject {
         clearToken()
         currentUser = nil
         phase = .signedOut
+        Task { await ChatService.shared.disconnect() }
     }
 
     /// Refresh the cached user (e.g. after an admin role change to self).
