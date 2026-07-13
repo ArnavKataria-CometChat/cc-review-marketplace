@@ -16,15 +16,13 @@ import (
 // the README — it is NOT a real credential.
 const DemoPassword = "Password123!"
 
-// listingPhotos returns two sized URLs for a HAND-CURATED Unsplash photo that
-// actually depicts the listing (picked per item, not keyword-guessed). Unsplash's
-// image CDN resizes via query params and permits hotlinking, so these render
-// out of the box and stay stable. `photoID` is the Unsplash "<epoch>-<hash>" id.
+// listingPhotos returns the single cover image for a listing — a HAND-CURATED
+// Unsplash photo that actually depicts the item (picked per item, not
+// keyword-guessed). Unsplash's image CDN resizes via query params and permits
+// hotlinking, so it renders out of the box. `photoID` is the "<epoch>-<hash>" id.
 func listingPhotos(photoID string) []string {
-	base := "https://images.unsplash.com/photo-" + photoID
 	return []string{
-		base + "?w=600&h=400&fit=crop",
-		base + "?w=600&h=400&fit=crop&crop=entropy",
+		"https://images.unsplash.com/photo-" + photoID + "?w=600&h=400&fit=crop",
 	}
 }
 
