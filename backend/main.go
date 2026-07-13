@@ -1,8 +1,9 @@
 // Command marketplace-backend is the REST API for the peer-to-peer marketplace.
 //
-// Phase A baseline: full RBAC (buyer/seller/support/admin), listings, inquiries,
-// favorites, reports and admin moderation. No chat/calling — those seams are
-// left for a Phase B CometChat integration.
+// Full RBAC (buyer/seller/support/admin), listings, inquiries, favorites, reports
+// and admin moderation, plus a server-side CometChat integration: per-user chat
+// identities + auth tokens and buyer+seller+support dispute groups (see the
+// internal/cometchat package and internal/server/handlers_cometchat.go).
 package main
 
 import (
@@ -31,6 +32,12 @@ func main() {
 
 	authMgr := auth.NewManager(cfg.JWTSecret, cfg.TokenTTL)
 	srv := server.New(cfg, st, authMgr)
+
+	if srv.ChatEnabled() {
+		log.Printf("CometChat integration enabled (app %s, region %s)", cfg.CometChatAppID, cfg.CometChatRegion)
+	} else {
+		log.Println("CometChat not configured — chat endpoints disabled (set COMETCHAT_APP_ID/REGION/REST_API_KEY)")
+	}
 
 	httpServer := &http.Server{
 		Addr:              ":" + cfg.Port,

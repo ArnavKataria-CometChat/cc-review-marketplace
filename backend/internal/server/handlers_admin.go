@@ -53,8 +53,9 @@ func (s *Server) handleAdminPatchUser(c *gin.Context) {
 	c.JSON(http.StatusOK, target)
 }
 
-// handleAdminRemoveListing takes a listing down (status -> removed). In Phase B
-// this is also where messages/conversations tied to the listing get purged.
+// handleAdminRemoveListing takes a listing down (status -> removed) and purges
+// the CometChat conversations tied to it (the dispute groups of its flagged
+// inquiries).
 func (s *Server) handleAdminRemoveListing(c *gin.Context) {
 	l, err := s.store.GetListing(c.Param("id"))
 	if err != nil {
@@ -67,6 +68,7 @@ func (s *Server) handleAdminRemoveListing(c *gin.Context) {
 		errorJSON(c, storeErrStatus(err), "could not remove listing")
 		return
 	}
+	s.purgeListingConversations(c.Request.Context(), l.ID)
 	s.audit(c, "listing.remove", l.ID, "listing removed by admin")
 	c.JSON(http.StatusOK, l)
 }

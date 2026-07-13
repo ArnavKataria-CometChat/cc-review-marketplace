@@ -5,6 +5,7 @@ import { request } from "./client";
 import type {
   AuditEntry,
   AuthResponse,
+  CometChatSession,
   FavoriteEntry,
   Inquiry,
   InquiryStatus,
@@ -26,6 +27,12 @@ export const register = (name: string, email: string, password: string, role: Ro
   request<AuthResponse>("/auth/register", { method: "POST", auth: false, body: { name, email, password, role } });
 
 export const getMe = () => request<User>("/users/me");
+
+// ---- CometChat ----
+// Provisions the caller's CometChat user (JIT) and returns a fresh auth token.
+// Every client calls this once after login to bring up chat + calling.
+export const getCometChatToken = () =>
+  request<CometChatSession>("/cometchat/token", { method: "POST" });
 
 // ---- Listings ----
 export interface ListingQuery {

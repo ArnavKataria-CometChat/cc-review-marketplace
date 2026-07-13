@@ -16,11 +16,15 @@ type Config struct {
 	TokenTTL      time.Duration
 	SeedDemoData  bool
 
-	// CometChat placeholders — unused in Phase A (no chat is wired up), but
-	// documented and read here so the deployment surface is ready for Phase B.
-	CometChatAppID  string
-	CometChatRegion string
-	CometChatAPIKey string
+	// CometChat credentials. AppID + Region are non-secret and handed to clients
+	// alongside a backend-minted auth token. RESTAPIKey is the fullAccess key —
+	// server-only, used to provision users and mint tokens; it must never reach a
+	// client bundle. AuthKey is the dev-only key and is intentionally NOT used by
+	// this backend (the token flow supersedes it) but read for env parity.
+	CometChatAppID      string
+	CometChatRegion     string
+	CometChatRESTAPIKey string
+	CometChatAuthKey    string
 }
 
 // Load reads configuration from the environment, applying defaults.
@@ -30,9 +34,10 @@ func Load() Config {
 		JWTSecret:       getenv("JWT_SECRET", "dev-only-insecure-secret-change-me"),
 		TokenTTL:        getdur("TOKEN_TTL", 24*time.Hour),
 		SeedDemoData:    getbool("SEED_DEMO_DATA", true),
-		CometChatAppID:  os.Getenv("COMETCHAT_APP_ID"),
-		CometChatRegion: os.Getenv("COMETCHAT_REGION"),
-		CometChatAPIKey: os.Getenv("COMETCHAT_API_KEY"),
+		CometChatAppID:      os.Getenv("COMETCHAT_APP_ID"),
+		CometChatRegion:     os.Getenv("COMETCHAT_REGION"),
+		CometChatRESTAPIKey: os.Getenv("COMETCHAT_REST_API_KEY"),
+		CometChatAuthKey:    os.Getenv("COMETCHAT_AUTH_KEY"),
 	}
 }
 

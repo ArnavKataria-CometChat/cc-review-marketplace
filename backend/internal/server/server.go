@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/cometchat/marketplace-backend/internal/auth"
+	"github.com/cometchat/marketplace-backend/internal/cometchat"
 	"github.com/cometchat/marketplace-backend/internal/config"
 	"github.com/cometchat/marketplace-backend/internal/models"
 	"github.com/cometchat/marketplace-backend/internal/store"
@@ -15,12 +16,23 @@ type Server struct {
 	cfg   config.Config
 	store store.Store
 	auth  *auth.Manager
+	cc    *cometchat.Client
 }
 
-// New builds a Server.
+// New builds a Server. The CometChat client is derived from config and is a
+// no-op when credentials are absent, so the API behaves identically with or
+// without chat configured.
 func New(cfg config.Config, s store.Store, a *auth.Manager) *Server {
-	return &Server{cfg: cfg, store: s, auth: a}
+	return &Server{
+		cfg:   cfg,
+		store: s,
+		auth:  a,
+		cc:    cometchat.New(cfg.CometChatAppID, cfg.CometChatRegion, cfg.CometChatRESTAPIKey),
+	}
 }
+
+// ChatEnabled reports whether CometChat is configured (credentials present).
+func (s *Server) ChatEnabled() bool { return s.cc.Enabled() }
 
 // Router constructs the gin engine with all routes and guards installed.
 func (s *Server) Router() *gin.Engine {
@@ -42,6 +54,10 @@ func (s *Server) Router() *gin.Engine {
 	authed.Use(s.requireAuth())
 	{
 		authed.GET("/users/me", s.handleMe)
+
+		// CometChat bootstrap: sync the caller's chat identity and mint a
+		// per-user auth token the frontend logs in with (App ID + Region + token).
+		authed.POST("/cometchat/token", s.handleCometChatToken)
 
 		// Seller-owned listing management.
 		authed.POST("/listings", s.requireRole(models.RoleSeller), s.handleCreateListing)

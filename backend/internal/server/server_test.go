@@ -144,6 +144,25 @@ func TestSellerCannotSeeDisputeQueue(t *testing.T) {
 	}
 }
 
+func TestCometChatTokenDisabledWhenUnconfigured(t *testing.T) {
+	// The test server has no CometChat credentials, so the bootstrap endpoint
+	// must degrade gracefully to 503 rather than erroring or panicking.
+	r, _ := newTestServer(t)
+	tok := login(t, r, "buyer@example.com")
+	w := do(t, r, http.MethodPost, "/cometchat/token", tok, nil)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("cometchat token (unconfigured): expected 503, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestCometChatTokenRequiresAuth(t *testing.T) {
+	r, _ := newTestServer(t)
+	w := do(t, r, http.MethodPost, "/cometchat/token", "", nil)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("cometchat token (no auth): expected 401, got %d", w.Code)
+	}
+}
+
 func TestBrowseListingsPublic(t *testing.T) {
 	r, _ := newTestServer(t)
 	w := do(t, r, http.MethodGet, "/listings?category=sports", "", nil)

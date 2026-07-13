@@ -139,7 +139,8 @@ func (s *Server) handlePatchReport(c *gin.Context) {
 	}
 
 	// Escalation seam: flagging a thread-linked report marks the inquiry as a
-	// dispute; resolving it clears the flag and closes the thread.
+	// dispute and spins up the buyer+seller+support CometChat group; resolving it
+	// clears the flag, closes the thread and tears the group down.
 	if r.InquiryID != "" {
 		if inq, err := s.store.GetInquiry(r.InquiryID); err == nil {
 			switch *req.Status {
@@ -151,6 +152,13 @@ func (s *Server) handlePatchReport(c *gin.Context) {
 			}
 			inq.UpdatedAt = nowUTC()
 			_ = s.store.UpdateInquiry(inq)
+
+			switch *req.Status {
+			case models.ReportFlagged:
+				s.escalateDispute(c.Request.Context(), inq)
+			case models.ReportResolved:
+				s.closeDispute(c.Request.Context(), inq)
+			}
 		}
 	}
 
