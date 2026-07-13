@@ -15,7 +15,11 @@
     <string name="label_role">I want to</string>
     <string name="role_buyer_cta">Buy items</string>
     <string name="role_seller_cta">Sell items</string>
-    <string name="demo_hint">Demo accounts (password Password123!):\nbuyer@example.com · seller@example.com · support@example.com · admin@example.com</string>
+    <string name="demo_hint">Demo accounts — tap to fill (password Password123!)</string>
+    <string name="demo_buyer">Buyer · buyer@example.com</string>
+    <string name="demo_seller">Seller · seller@example.com</string>
+    <string name="demo_support">Support · support@example.com</string>
+    <string name="demo_admin">Admin · admin@example.com</string>
 
     <!-- Navigation -->
     <string name="nav_browse">Browse</string>

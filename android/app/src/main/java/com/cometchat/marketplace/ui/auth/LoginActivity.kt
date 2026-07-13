@@ -2,6 +2,7 @@ package com.cometchat.marketplace.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.cometchat.marketplace.R
@@ -21,6 +22,11 @@ import kotlinx.coroutines.launch
  */
 class LoginActivity : AppCompatActivity() {
 
+    private companion object {
+        // Shared password for every seeded demo account (see backend seed).
+        const val DEMO_PASSWORD = "Password123!"
+    }
+
     private lateinit var binding: ActivityLoginBinding
     private var registerMode = false
 
@@ -31,6 +37,18 @@ class LoginActivity : AppCompatActivity() {
 
         binding.toggleButton.setOnClickListener { setMode(!registerMode) }
         binding.primaryButton.setOnClickListener { submit() }
+
+        // Tap-to-fill demo accounts (parity with web + iOS): each button carries
+        // its email in android:tag; tapping fills the form with the shared demo
+        // password so the user can sign in with one tap.
+        val fillDemo = View.OnClickListener { v ->
+            setMode(false)
+            binding.emailInput.setText(v.tag as String)
+            binding.passwordInput.setText(DEMO_PASSWORD)
+        }
+        listOf(binding.demoBuyer, binding.demoSeller, binding.demoSupport, binding.demoAdmin)
+            .forEach { it.setOnClickListener(fillDemo) }
+
         setMode(false)
     }
 
