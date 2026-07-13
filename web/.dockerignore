@@ -1,0 +1,15 @@
+# Never copy host build artifacts into the image — deps are installed fresh via
+# `npm ci` inside the build stage (host node_modules may be the wrong platform).
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+README.md
+verify.sh
+Dockerfile
+.dockerignore
+npm-debug.log*
+.DS_Store
