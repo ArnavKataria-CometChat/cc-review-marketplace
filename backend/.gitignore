@@ -1,0 +1,16 @@
+# Local env
+.env
+
+# Binaries
+/marketplace-backend
+/out/
+*.exe
+
+# Go
+vendor/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
