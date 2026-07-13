@@ -21,6 +21,9 @@ import com.cometchat.uikit.core.events.CometChatEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.ref.WeakReference
@@ -46,6 +49,9 @@ object ChatManager {
 
     private const val TAG = "ChatManager"
     private const val CALL_LISTENER_ID = "marketplace_call_listener"
+    private const val PREFS = "cometchat_boot"
+    private const val KEY_APP_ID = "app_id"
+    private const val KEY_REGION = "region"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -55,6 +61,22 @@ object ChatManager {
 
     @Volatile
     private var callListenerRegistered = false
+
+    /**
+     * The current incoming 1:1 call, or null when none is ringing.
+     *
+     * The hosted [CometChatIncomingCall] widget does NOT self-gate in UIKit
+     * v6.0.3: mounted as an always-present overlay it renders its Accept/Decline
+     * chrome even with no call bound, covering the conversation header (peer
+     * name, back button, and the voice/video call buttons). So ChatActivity keeps
+     * the widget GONE and only shows it while this flow is non-null. Set on
+     * onIncomingCallReceived and cleared on cancel/reject/accept/end.
+     */
+    private val _incomingCall = MutableStateFlow<Call?>(null)
+    val incomingCall: StateFlow<Call?> = _incomingCall.asStateFlow()
+
+    /** Hide the incoming-call overlay (call after the user accepts/rejects). */
+    fun clearIncomingCall() { _incomingCall.value = null }
 
     /** True once the SDK is initialized and a user is logged in. */
     val isLoggedIn: Boolean
@@ -81,13 +103,57 @@ object ChatManager {
             override fun onActivityDestroyed(activity: Activity) {}
         })
 
+        // [A7] The CometChat SDK MUST be initialized in every process (the calling
+        // UI runs in its own process). App ID/Region come from the backend, so we
+        // can't hardcode them — but once the first login has cached them, re-init
+        // eagerly here (install runs from Application.onCreate in EVERY process).
+        // Without this, a CometChat UIKit view mounting in the call process calls
+        // into an uninitialized SDK (SQLiteManager) and crashes with
+        // "Please call the CometChat.init() method ...".
+        eagerInit(application)
+
         // [A3] When a call ends LOCALLY, the UI Kit's own-task ongoing-call screen
         // finishes back to the launcher. Bring our app forward instead.
         scope.launch {
             CometChatEvents.callEvents.collect { event ->
-                if (event is CometChatCallEvent.CallEnded) reForegroundApp()
+                when (event) {
+                    is CometChatCallEvent.CallEnded -> {
+                        _incomingCall.value = null
+                        reForegroundApp()
+                    }
+                    is CometChatCallEvent.CallRejected -> _incomingCall.value = null
+                    is CometChatCallEvent.CallAccepted -> _incomingCall.value = null
+                    else -> Unit
+                }
             }
         }
+    }
+
+    /**
+     * [A7] Re-initialize the CometChat SDK in the current process if a prior login
+     * cached the App ID/Region. Safe to call from Application.onCreate in every
+     * process; no-op if the SDK is already up or no creds are cached yet (the
+     * first-ever launch initializes lazily via [ensureReady] instead).
+     */
+    private fun eagerInit(context: Context) {
+        if (CometChatUIKit.isSDKInitialized()) return
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val appId = prefs.getString(KEY_APP_ID, null) ?: return
+        val region = prefs.getString(KEY_REGION, null) ?: return
+        scope.launch {
+            if (CometChatUIKit.isSDKInitialized()) return@launch
+            if (initUiKit(context, appId, region)) {
+                initCallsSdk(context, appId, region)
+            }
+        }
+    }
+
+    private fun cacheCreds(context: Context, appId: String, region: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_APP_ID, appId)
+            .putString(KEY_REGION, region)
+            .apply()
     }
 
     // --- Bootstrap ----------------------------------------------------------
@@ -112,6 +178,10 @@ object ChatManager {
             }
         }
         if (token.appId.isBlank() || token.authToken.isBlank()) return false
+
+        // [A7] Persist the (non-secret) App ID/Region so Application.onCreate can
+        // re-init the SDK in every process (incl. the separate call process).
+        cacheCreds(context.applicationContext, token.appId, token.region)
 
         if (!CometChatUIKit.isSDKInitialized() && !initUiKit(context.applicationContext, token.appId, token.region)) {
             return false
@@ -190,17 +260,25 @@ object ChatManager {
         callListenerRegistered = true
         CometChat.addCallListener(CALL_LISTENER_ID, object : CometChat.CallListener() {
             override fun onIncomingCallReceived(call: Call?) {
-                // The hosted CometChatIncomingCall overlay renders/answers this.
+                // Surface the ringing call so ChatActivity can SHOW the (otherwise
+                // GONE) CometChatIncomingCall overlay. The widget does not gate
+                // itself, so we drive its visibility off this state.
+                _incomingCall.value = call
             }
 
             override fun onOutgoingCallAccepted(call: Call?) {}
             override fun onOutgoingCallRejected(call: Call?) {}
-            override fun onIncomingCallCancelled(call: Call?) {}
+
+            override fun onIncomingCallCancelled(call: Call?) {
+                // Caller hung up before we answered — hide the overlay.
+                _incomingCall.value = null
+            }
 
             override fun onCallEndedMessageReceived(call: Call?) {
                 // [A4] The UI Kit's ongoing-call activity does NOT finish when the
                 // REMOTE party ends a 1:1 call (only the LOCAL end fires the event
                 // bus). Tear it down ourselves so we don't leave a ghost call.
+                _incomingCall.value = null
                 finishOngoingCallActivity()
                 CometChat.clearActiveCall()
                 reForegroundApp()

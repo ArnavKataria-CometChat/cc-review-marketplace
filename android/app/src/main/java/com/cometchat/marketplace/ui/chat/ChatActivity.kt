@@ -5,7 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.cometchat.chat.core.CometChat
 import com.cometchat.chat.exceptions.CometChatException
 import com.cometchat.chat.models.Group
@@ -39,6 +41,24 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.messageHeader.setOnBackPress { finish() }
+
+        // The CometChatIncomingCall widget does not self-gate (UIKit v6.0.3): as an
+        // always-mounted overlay it renders its Accept/Decline chrome with no call
+        // bound, covering the header. Keep it GONE and only surface it while a call
+        // is actually ringing (ChatManager.incomingCall drives this).
+        binding.incomingCall.visibility = View.GONE
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ChatManager.incomingCall.collect { call ->
+                    if (call != null) {
+                        binding.incomingCall.setCall(call)
+                        binding.incomingCall.visibility = View.VISIBLE
+                    } else {
+                        binding.incomingCall.visibility = View.GONE
+                    }
+                }
+            }
+        }
 
         val uid = intent.getStringExtra(EXTRA_UID)
         val guid = intent.getStringExtra(EXTRA_GUID)
