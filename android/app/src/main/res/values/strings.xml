@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Marketplace</string>
+
+    <!-- Auth -->
+    <string name="login_title">Marketplace</string>
+    <string name="login_subtitle">Buy and sell with people nearby</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_name">Full name</string>
+    <string name="action_login">Log in</string>
+    <string name="action_register">Create account</string>
+    <string name="action_have_account">Already have an account? Log in</string>
+    <string name="action_need_account">New here? Create an account</string>
+    <string name="label_role">I want to</string>
+    <string name="role_buyer_cta">Buy items</string>
+    <string name="role_seller_cta">Sell items</string>
+    <string name="demo_hint">Demo accounts (password Password123!):\nbuyer@example.com · seller@example.com · support@example.com · admin@example.com</string>
+
+    <!-- Navigation -->
+    <string name="nav_browse">Browse</string>
+    <string name="nav_favorites">Saved</string>
+    <string name="nav_inquiries">Inquiries</string>
+    <string name="nav_listings">Listings</string>
+    <string name="nav_sell">Sell</string>
+    <string name="nav_queue">Disputes</string>
+    <string name="nav_users">Users</string>
+    <string name="nav_moderation">Moderation</string>
+    <string name="nav_audit">Audit</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Common -->
+    <string name="action_logout">Log out</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_save">Save</string>
+    <string name="loading">Loading…</string>
+    <string name="empty_generic">Nothing here yet</string>
+
+    <!-- Inquiry / report item text -->
+    <string name="badge_disputed">DISPUTED</string>
+    <string name="inquiry_disputed_hint">Escalated to a dispute — support is involved</string>
+    <string name="inquiry_status_hint">Thread is %1$s</string>
+    <string name="report_target_fmt">%1$s report</string>
+    <string name="report_linked_thread">Linked to an inquiry thread</string>
+    <string name="report_no_thread">No linked thread</string>
+</resources>

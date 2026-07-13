@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".MarketplaceApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Marketplace"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".ui.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Marketplace">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ui.auth.LoginActivity" />
+        <activity android:name=".ui.main.MainActivity" />
+        <activity android:name=".ui.listings.ListingDetailActivity" />
+        <activity android:name=".ui.listings.CreateListingActivity" />
+        <activity android:name=".ui.inquiries.InquiryDetailActivity" />
+        <activity android:name=".ui.reports.ReportDetailActivity" />
+
+    </application>
+
+</manifest>
