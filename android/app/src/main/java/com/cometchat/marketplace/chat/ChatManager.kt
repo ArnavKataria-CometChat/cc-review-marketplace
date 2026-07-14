@@ -95,17 +95,23 @@ object ChatManager {
                 topActivity = WeakReference(activity)
                 if (isCometChatCallActivity(activity)) {
                     ongoingCallActivity = WeakReference(activity)
-                    // The kit's call activities enter PiP on user-leave (their
-                    // onUserLeaveHint calls enterPictureInPictureMode
-                    // unconditionally) and declare configChanges for screen size,
-                    // so on return to full screen the React-Native/Jitsi call
-                    // surface keeps its tiny PiP measurements — the call UI stays
-                    // crammed in a narrow strip. Kick a full re-measure of the
-                    // decor tree once the resume settles.
-                    activity.window?.decorView?.let { decor ->
-                        decor.post {
-                            decor.requestLayout()
-                            decor.invalidate()
+                    // The kit's call screen renders video/participants into a
+                    // SurfaceView (React-Native/Jitsi). On first open that surface
+                    // often stays BLACK — its Surface never composites until a
+                    // window change forces it to recreate; minimising to PiP and
+                    // restoring is exactly what fixes it. Reproduce that surface
+                    // recreation WITHOUT the PiP round-trip: find the SurfaceView(s)
+                    // and toggle INVISIBLE->VISIBLE, which destroys+recreates the
+                    // Surface and forces a fresh composite. The RN/Jitsi surface
+                    // mounts seconds after resume, so retry across the first ~12s.
+                    val content = activity.findViewById<android.view.View>(android.R.id.content)
+                    if (content != null) {
+                        longArrayOf(1200L, 3000L, 6000L, 10000L).forEach { delayMs ->
+                            content.postDelayed({
+                                if (!activity.isFinishing && !activity.isDestroyed) {
+                                    kickCallSurfaces(content)
+                                }
+                            }, delayMs)
                         }
                     }
                 }
@@ -318,6 +324,29 @@ object ChatManager {
                 reForegroundApp()
             }
         })
+    }
+
+    /**
+     * Walk [root] for SurfaceView/TextureView (the kit's video render surfaces)
+     * and briefly toggle each INVISIBLE->VISIBLE. That destroys and recreates the
+     * underlying Surface, forcing a fresh composite — the same thing a PiP
+     * minimise/restore does, which is what un-sticks the black call screen.
+     */
+    private fun kickCallSurfaces(root: android.view.View) {
+        val surfaces = ArrayList<android.view.View>()
+        fun collect(v: android.view.View) {
+            if (v is android.view.SurfaceView || v is android.view.TextureView) surfaces.add(v)
+            if (v is android.view.ViewGroup) for (i in 0 until v.childCount) collect(v.getChildAt(i))
+        }
+        collect(root)
+        for (s in surfaces) {
+            if (s.visibility == android.view.View.VISIBLE) {
+                s.visibility = android.view.View.INVISIBLE
+                s.post { s.visibility = android.view.View.VISIBLE }
+            }
+        }
+        // Also poke the whole tree in case the surface hasn't mounted yet.
+        root.requestLayout()
     }
 
     private fun finishOngoingCallActivity() {
