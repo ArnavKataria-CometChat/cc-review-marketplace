@@ -11,6 +11,7 @@
 // complete before any CometChat component mounts (callers gate on connect()).
 
 import { CometChatUIKit, UIKitSettingsBuilder } from "@cometchat/chat-uikit-react";
+import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { getCometChatToken } from "../api/endpoints";
 
 let initedFor: string | null = null; // `${appId}:${region}` the UIKit was init'd for
@@ -53,6 +54,17 @@ export async function connectCometChat(): Promise<string> {
       await CometChatUIKit.logout().catch(() => undefined);
     }
     await CometChatUIKit.loginWithAuthToken(token.authToken);
+    // Clear any STALE/ghost active call left from a previous page/session. If the
+    // SDK still holds an active call (e.g. a call surface that wasn't torn down),
+    // this user is reported BUSY and every new incoming call auto-rejects as "Call
+    // Busy" — the "call disconnects the moment it's initiated" symptom. A fresh
+    // login can't have a legitimate active call, so clear it. (A page reload then
+    // fixes a stuck-busy user.)
+    try {
+      if (CometChat.getActiveCall()) CometChat.clearActiveCall();
+    } catch {
+      /* ignore */
+    }
     connectedUid = token.uid;
     return token.uid;
   })();
