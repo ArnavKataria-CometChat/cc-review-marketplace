@@ -49,7 +49,14 @@ export function CometChatProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ ready, error }}>
       {children}
-      {ready && <CometChatIncomingCall />}
+      {/* CometChatIncomingCall does NOT position itself — rendered bare it flows
+          to the BOTTOM of the document (below the fold), so an incoming call is
+          easy to miss entirely. Pin it as a fixed top-right overlay instead. */}
+      {ready && (
+        <div className="cc-incoming-call-overlay">
+          <CometChatIncomingCall />
+        </div>
+      )}
     </Ctx.Provider>
   );
 }

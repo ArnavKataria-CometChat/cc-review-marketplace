@@ -753,3 +753,22 @@ label.radio input {
 .cc-conversations [class*="cometchat-conversations"] {
   height: 100%;
 }
+
+/* Incoming-call overlay: CometChatIncomingCall renders in normal flow (it does
+   not position itself), which dumped the ringing card at the very bottom of the
+   document. Pin it top-right above everything; keep it click-through-free only
+   where the card actually is. */
+.cc-incoming-call-overlay {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 1000;
+  /* The kit card renders position:absolute; left:0; width:360px inside its
+     nearest positioned ancestor — give the anchor that width so right:16px
+     actually right-aligns the card instead of letting it hang off-screen. */
+  width: 360px;
+  max-width: calc(100vw - 32px);
+}
+.cc-incoming-call-overlay .cometchat-incoming-call {
+  max-width: 100%;
+}
