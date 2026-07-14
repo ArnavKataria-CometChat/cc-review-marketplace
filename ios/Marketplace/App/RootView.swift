@@ -44,6 +44,8 @@ struct MainTabView: View {
             case .buyer:
                 BrowseView()
                     .tabItem { Label("Browse", systemImage: "magnifyingglass") }
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 FavoritesView()
                     .tabItem { Label("Favorites", systemImage: "heart") }
                 InquiriesView()
@@ -52,16 +54,22 @@ struct MainTabView: View {
             case .seller:
                 MyListingsView()
                     .tabItem { Label("My Listings", systemImage: "tag") }
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 InquiriesView()
                     .tabItem { Label("Inbox", systemImage: "tray.full") }
                 BrowseView()
                     .tabItem { Label("Browse", systemImage: "magnifyingglass") }
 
             case .support:
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 DisputeQueueView()
                     .tabItem { Label("Disputes", systemImage: "exclamationmark.bubble") }
 
             case .admin:
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 AdminUsersView()
                     .tabItem { Label("Users", systemImage: "person.2") }
                 AdminListingsView()

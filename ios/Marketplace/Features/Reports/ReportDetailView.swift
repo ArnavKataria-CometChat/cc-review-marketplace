@@ -73,10 +73,10 @@ struct ReportDetailView: View {
                 // group chat + group voice/video call.
                 Section("Dispute group") {
                     if inquiry.flagged {
-                        NavigationLink {
-                            ChatScreen(target: .group(guid: "dispute-\(inquiry.id)"),
-                                       title: "Dispute")
-                        } label: {
+                        // [I8] VALUE-based push (destination registered on the
+                        // stack in DisputeQueueView) — survives the Form reloads
+                        // that popped the old inline NavigationLink.
+                        NavigationLink(value: GroupChatRoute(guid: "dispute-\(inquiry.id)")) {
                             Label("Open group chat & call", systemImage: "person.3.fill")
                         }
                         Text("Group conversation with the buyer and seller. Voice & video call buttons are in the chat header.")

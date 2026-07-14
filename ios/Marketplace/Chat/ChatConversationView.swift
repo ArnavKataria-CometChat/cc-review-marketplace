@@ -4,11 +4,19 @@ import CometChatUIKitSwift
 import CometChatSDK
 
 /// What a chat screen is anchored to.
-enum ChatTarget: Equatable {
+enum ChatTarget: Equatable, Hashable, Identifiable {
     /// A 1:1 conversation with another app user (CometChat UID == app user id).
     case user(uid: String)
     /// A dispute group conversation (GUID `dispute-<inquiryId>`).
     case group(guid: String)
+
+    /// Stable id so a tapped conversation can drive `navigationDestination(item:)`.
+    var id: String {
+        switch self {
+        case .user(let uid): return "user:\(uid)"
+        case .group(let guid): return "group:\(guid)"
+        }
+    }
 }
 
 /// SwiftUI wrapper that hosts a full CometChat conversation (header + message
