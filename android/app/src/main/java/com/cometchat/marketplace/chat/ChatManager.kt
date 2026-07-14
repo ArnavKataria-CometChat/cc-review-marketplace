@@ -136,15 +136,16 @@ object ChatManager {
      * first-ever launch initializes lazily via [ensureReady] instead).
      */
     private fun eagerInit(context: Context) {
-        if (CometChatUIKit.isSDKInitialized()) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val appId = prefs.getString(KEY_APP_ID, null) ?: return
         val region = prefs.getString(KEY_REGION, null) ?: return
         scope.launch {
-            if (CometChatUIKit.isSDKInitialized()) return@launch
-            if (initUiKit(context, appId, region)) {
-                initCallsSdk(context, appId, region)
-            }
+            // The chat SDK and the calls CORE (CometChatCalls.init) initialize
+            // SEPARATELY. Ensure BOTH — do NOT skip the calls init just because the
+            // chat SDK is already up (that left group/conference joinSession failing
+            // with "Please call the CometChatCalls.init() method ...", X1).
+            val chatOk = CometChatUIKit.isSDKInitialized() || initUiKit(context, appId, region)
+            if (chatOk) initCallsSdk(context, appId, region)
         }
     }
 
@@ -226,7 +227,12 @@ object ChatManager {
         }
 
     private suspend fun initCallsSdk(context: Context, appId: String, region: String) {
-        if (CometChatUIKit.isCallsSDKInitialized()) return
+        // Do NOT early-return on CometChatUIKit.isCallsSDKInitialized(): that flag
+        // reads true once calling is enabled on the UIKit (setEnableCalling) even
+        // when the calls CORE was never actually initialized in this process/session
+        // — which makes the OngoingCall screen's joinSession fail "Please call the
+        // CometChatCalls.init() method ..." and hang on "connecting" (X1, group/
+        // conference path). CometChatCalls.init is idempotent, so always run it.
         suspendCancellableCoroutine<Unit> { cont ->
             val callAppSettings = CallAppSettings.CallAppSettingBuilder()
                 .setAppId(appId)
