@@ -120,6 +120,13 @@ final class ChatService: ObservableObject {
             // already auto-established.
             await establishSocket()
 
+            // Clear any STALE active call left over from a previous session/crash.
+            // If getActiveCall() is non-nil the SDK thinks we're still in a call and
+            // auto-rejects every new incoming call as "Call Busy" (and won't let us
+            // place one) — the "call disconnects as soon as it's initiated" symptom.
+            // A fresh login can never have a legitimately-active call, so clear it.
+            CometChat.clearActiveCall()
+
             connectedUID = token.uid
             phase = .ready
         } catch let error as APIError {
@@ -248,8 +255,22 @@ final class ChatService: ObservableObject {
 /// synchronous listener protocol; all work is hopped onto the main queue.
 final class CallCleanupListener: CometChatCallEventListener {
 
-    func ccCallEnded(call: Call) { dismissOngoingCall() }
-    func ccCallRejected(call: Call) { dismissOngoingCall() }
+    func ccCallEnded(call: Call) { dismissIfActive(call) }
+    func ccCallRejected(call: Call) { dismissIfActive(call) }
+
+    /// Only tear down when the ended/rejected call IS the currently-active one.
+    /// End/reject events also arrive for OLD sessions (a busy-reject of a stale
+    /// ring, a late end for a prior call); acting on those would dismiss + clear
+    /// a DIFFERENT call that just started — killing a fresh call "as soon as it's
+    /// initiated". If there's no active call, allow the dismiss (cleanup).
+    private func dismissIfActive(_ call: Call) {
+        if let active = CometChat.getActiveCall(),
+           let ended = call.sessionID, !ended.isEmpty,
+           ended != active.sessionID {
+            return
+        }
+        dismissOngoingCall()
+    }
 
     private func dismissOngoingCall() {
         DispatchQueue.main.async {
