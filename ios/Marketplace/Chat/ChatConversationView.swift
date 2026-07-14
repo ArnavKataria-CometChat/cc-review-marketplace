@@ -82,11 +82,20 @@ final class MessagesViewController: UIViewController {
         loadingLabel.textAlignment = .center
 
         layout()
-        resolveTarget()
 
-        // If the CometChat socket (re)connects after the message list mounted,
-        // re-apply the subject so a hung/empty initial fetch is retried — the fix
-        // for the "chat opens but stays on skeleton loaders" cold-start case.
+        // CRITICAL: set the message list's SUBJECT SYNCHRONOUSLY here, from the id
+        // we already have — do NOT wait for an async getUser/getGroup. The kit's
+        // message list fires its history fetch when it enters the window IF a
+        // subject is set; if we only set it later (in the getUser callback) the
+        // list already entered the window with no subject, never fetched, and
+        // stayed on skeleton loaders forever ("chat not loading" even though the
+        // socket is connected). A subject built from just the id is enough to
+        // fetch + send; getUser/getGroup then only ENRICHES the header (name,
+        // avatar). This mirrors the working telehealth setup.
+        applyTargetSubject()
+        enrichHeader()
+
+        // Bonus recovery: if the socket (re)connects later, re-arm the fetch.
         CometChat.addConnectionListener(connectionListenerID, self)
     }
 
@@ -126,59 +135,55 @@ final class MessagesViewController: UIViewController {
 
     // MARK: - Target resolution
 
-    private func resolveTarget() {
-        setChatViews(hidden: true)
+    // Qualify with CometChatSDK — SwiftUI/the app export their own `User`/`Group`,
+    // which would otherwise shadow the SDK types here.
+
+    /// Set the message list/header/composer subject from the id we ALREADY have,
+    /// synchronously, so the list has a subject before it enters the window and
+    /// fires its fetch. A subject built from the id alone is enough to fetch+send.
+    private func applyTargetSubject() {
+        switch target {
+        case .user(let uid):
+            let user = CometChatSDK.User(uid: uid, name: uid)
+            resolvedUser = user
+            resolvedGroup = nil
+            header.set(user: user)
+            messageList.set(user: user)
+            composer.set(user: user)
+        case .group(let guid):
+            // Minimal group from the guid; the real name/type arrive via
+            // enrichHeader's getGroup. Enough for the list to fetch by guid.
+            let group = CometChatSDK.Group(guid: guid, name: guid, groupType: .private, password: nil)
+            resolvedGroup = group
+            resolvedUser = nil
+            header.set(group: group)
+            messageList.set(group: group)
+            composer.set(group: group)
+        }
+        messageList.set(controller: self)
+        composer.set(controller: self)
+        setChatViews(hidden: false)
+    }
+
+    /// Fetch the full User/Group to enrich the HEADER (real name, avatar, presence).
+    /// The message list already fetched from the id-only subject, so this is
+    /// display-only and its failure does not block the conversation.
+    private func enrichHeader() {
         switch target {
         case .user(let uid):
             CometChat.getUser(UID: uid) { [weak self] user in
-                DispatchQueue.main.async { self?.configure(user: user) }
-            } onError: { [weak self] error in
-                DispatchQueue.main.async { self?.showError(error) }
-            }
+                guard let user else { return }
+                DispatchQueue.main.async { self?.header.set(user: user) }
+            } onError: { _ in }
         case .group(let guid):
             CometChat.getGroup(GUID: guid) { [weak self] group in
-                DispatchQueue.main.async { self?.configure(group: group) }
-            } onError: { [weak self] error in
-                DispatchQueue.main.async { self?.showError(error) }
-            }
+                DispatchQueue.main.async { self?.header.set(group: group) }
+            } onError: { _ in }
         }
     }
 
-    // Qualify with CometChatSDK — the app has its own `Marketplace.User` model,
-    // which would otherwise shadow the SDK's `User` here.
-    private func configure(user: CometChatSDK.User?) {
-        guard let user else { showError(nil); return }
-        resolvedUser = user
-        resolvedGroup = nil
-        header.set(user: user)
-        messageList.set(user: user)
-        messageList.set(controller: self)
-        composer.set(user: user)
-        composer.set(controller: self)
-        setChatViews(hidden: false)
-        scheduleRefetch()
-    }
-
-    // Qualify with CometChatSDK — this file imports SwiftUI, which also exports a
-    // `Group` type, so a bare `Group` is ambiguous for type lookup.
-    private func configure(group: CometChatSDK.Group?) {
-        guard let group else { showError(nil); return }
-        resolvedGroup = group
-        resolvedUser = nil
-        header.set(group: group)
-        messageList.set(group: group)
-        messageList.set(controller: self)
-        composer.set(group: group)
-        composer.set(controller: self)
-        setChatViews(hidden: false)
-        scheduleRefetch()
-    }
-
-    /// Re-arm the message list's history fetch. The list fires its fetch once when
-    /// its subject is set; if the socket wasn't ready then, it hangs on skeleton
-    /// loaders forever. Re-set the subject AND call reload() to force a fresh
-    /// fetch. Called (a) shortly after first configure (belt-and-suspenders for a
-    /// cold-start fetch that never fired) and (b) whenever the socket connects.
+    /// Re-arm the message list's fetch when the socket (re)connects — recovery for
+    /// a fetch that raced an unready connection.
     private func refetchMessages() {
         if let user = resolvedUser {
             messageList.set(user: user)
@@ -186,17 +191,6 @@ final class MessagesViewController: UIViewController {
             messageList.set(group: group)
         }
         messageList.reload()
-    }
-
-    private func scheduleRefetch() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-            self?.refetchMessages()
-        }
-    }
-
-    private func showError(_ error: CometChatException?) {
-        loadingLabel.text = error?.errorDescription ?? "This conversation is unavailable."
-        setChatViews(hidden: true)
     }
 }
 

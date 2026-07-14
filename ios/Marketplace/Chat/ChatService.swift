@@ -4,6 +4,23 @@ import CometChatUIKitSwift
 import CometChatSDK
 import CometChatCallsSDK
 
+/// Thread-safe one-shot: runs `action` on the FIRST call only. Used to bridge
+/// CometChat callbacks that fire multiple times into a CheckedContinuation (which
+/// traps if resumed more than once).
+private final class OneShot {
+    private let lock = NSLock()
+    private var fired = false
+    private let action: () -> Void
+    init(_ action: @escaping () -> Void) { self.action = action }
+    func fire() {
+        lock.lock()
+        let first = !fired
+        fired = true
+        lock.unlock()
+        if first { action() }
+    }
+}
+
 /// Owns the CometChat session for the whole app: one-time SDK initialization,
 /// token-based login, and the call-lifecycle glue the UI Kit doesn't handle
 /// itself.
@@ -94,12 +111,34 @@ final class ChatService: ObservableObject {
                 try await login(authToken: token.authToken)
             }
 
+            // Explicitly (re)establish the realtime WEBSOCKET. login() authenticates
+            // and returns, but the socket is not guaranteed to be up when it does —
+            // and message-history fetch goes over the socket. Symptom when it isn't:
+            // getUser + the conversation LIST work (REST/cache) but a thread stays
+            // on skeleton loaders forever because fetchPrevious never completes.
+            // CometChat.connect() is idempotent, so this is safe even if the socket
+            // already auto-established.
+            await establishSocket()
+
             connectedUID = token.uid
             phase = .ready
         } catch let error as APIError {
             phase = .failed(error.errorDescription ?? "Chat is unavailable.")
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Bring up the realtime socket. Wrapped so a failure doesn't block readiness
+    /// (chat can still show cached data; the connection listener re-fetches on a
+    /// later connect). CometChat.connect() is a no-op if already connected.
+    private func establishSocket() async {
+        // CometChat.connect's onSuccess fires on EVERY socket auth event (and from
+        // a background thread), not just once — resuming a CheckedContinuation
+        // twice traps (crash). Route both callbacks through a thread-safe one-shot.
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            let once = OneShot { cont.resume() }
+            CometChat.connect { once.fire() } onError: { _ in once.fire() }
         }
     }
 
