@@ -43,24 +43,46 @@ final class ChatService: ObservableObject {
 
     var isReady: Bool { phase == .ready }
 
+    /// The connect work runs in a Task OWNED by this service, not the SwiftUI view
+    /// that triggered it. Critical: the SDK init/login use
+    /// withCheckedThrowingContinuation, which does NOT observe task cancellation —
+    /// so if connect ran directly inside a view's `.task` and that view updated
+    /// (cancelling the task) while suspended in a continuation, the continuation
+    /// was ORPHANED: the await never returned, `phase` stuck at `.connecting`
+    /// forever ("Connecting to chat…") and the message list never got a live
+    /// session (perpetual skeletons). Owning the Task here keeps connect immune to
+    /// view churn. Observed symptom before this: `POST /cometchat/token` cancelled.
+    private var connectTask: Task<Void, Never>?
+
     // MARK: - Connect / disconnect
 
-    /// Bring up CometChat for `api`'s authenticated user: fetch a token, init the
-    /// SDKs once, then log in. Safe to call repeatedly — it no-ops when already
-    /// connected as the same user and re-logs-in when the app user changed.
-    func connect(using api: APIClient) async {
-        if case .connecting = phase { return }
+    /// Bring up CometChat for `api`'s authenticated user. Fire-and-forget +
+    /// idempotent: no-ops when a connect is already running or we're already
+    /// connected as the same user. Runs on a service-owned Task (see above).
+    func connect(using api: APIClient) {
+        if let task = connectTask, !task.isCancelled { return }  // already connecting
+        if phase == .ready, let uid = connectedUID,
+           CometChatUIKit.getLoggedInUser()?.uid == uid {
+            return
+        }
+        connectTask = Task { [weak self] in
+            await self?.performConnect(using: api)
+            self?.connectTask = nil
+        }
+    }
 
+    private func performConnect(using api: APIClient) async {
+        phase = .connecting
         do {
             let token = try await api.cometChatToken()
 
             // Already connected as this exact user — nothing to do.
-            if phase == .ready, connectedUID == token.uid,
+            if connectedUID == token.uid,
                CometChatUIKit.getLoggedInUser()?.uid == token.uid {
+                phase = .ready
                 return
             }
 
-            phase = .connecting
             try await initializeSDKIfNeeded(appID: token.appId, region: token.region)
 
             // A different user is still logged in (account switch) — clear them first.

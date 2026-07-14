@@ -34,7 +34,10 @@ struct MainTabView: View {
             // user id — re-fires only on account switch, not on every re-render
             // (gotcha I1).
             .task(id: user.id) {
-                await chat.connect(using: session.api)
+                // connect() is fire-and-forget and owns its own Task, so it is NOT
+                // cancelled when this view task is (which used to orphan the SDK
+                // login continuation and hang chat at "Connecting…").
+                chat.connect(using: session.api)
             }
     }
 

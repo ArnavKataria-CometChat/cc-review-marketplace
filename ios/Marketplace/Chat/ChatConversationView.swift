@@ -49,12 +49,22 @@ final class MessagesViewController: UIViewController {
     private let composer = CometChatMessageComposer()
     private let loadingLabel = UILabel()
 
+    // Resolved conversation subject, kept so a (re)connection can re-trigger the
+    // history fetch. The message list fires its fetch ONCE when set; if the socket
+    // wasn't fully connected yet (cold start / a reconnect mid-fetch) it can hang
+    // on skeleton loaders forever. We re-apply the subject on connect to recover.
+    private var resolvedUser: CometChatSDK.User?
+    private var resolvedGroup: CometChatSDK.Group?
+    private let connectionListenerID = "marketplace.messages.connection"
+
     init(target: ChatTarget) {
         self.target = target
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    deinit { CometChat.removeConnectionListener(connectionListenerID) }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -73,6 +83,11 @@ final class MessagesViewController: UIViewController {
 
         layout()
         resolveTarget()
+
+        // If the CometChat socket (re)connects after the message list mounted,
+        // re-apply the subject so a hung/empty initial fetch is retried — the fix
+        // for the "chat opens but stays on skeleton loaders" cold-start case.
+        CometChat.addConnectionListener(connectionListenerID, self)
     }
 
     // MARK: - Layout
@@ -133,28 +148,63 @@ final class MessagesViewController: UIViewController {
     // which would otherwise shadow the SDK's `User` here.
     private func configure(user: CometChatSDK.User?) {
         guard let user else { showError(nil); return }
+        resolvedUser = user
+        resolvedGroup = nil
         header.set(user: user)
         messageList.set(user: user)
         messageList.set(controller: self)
         composer.set(user: user)
         composer.set(controller: self)
         setChatViews(hidden: false)
+        scheduleRefetch()
     }
 
     // Qualify with CometChatSDK — this file imports SwiftUI, which also exports a
     // `Group` type, so a bare `Group` is ambiguous for type lookup.
     private func configure(group: CometChatSDK.Group?) {
         guard let group else { showError(nil); return }
+        resolvedGroup = group
+        resolvedUser = nil
         header.set(group: group)
         messageList.set(group: group)
         messageList.set(controller: self)
         composer.set(group: group)
         composer.set(controller: self)
         setChatViews(hidden: false)
+        scheduleRefetch()
+    }
+
+    /// Re-arm the message list's history fetch. The list fires its fetch once when
+    /// its subject is set; if the socket wasn't ready then, it hangs on skeleton
+    /// loaders forever. Re-set the subject AND call reload() to force a fresh
+    /// fetch. Called (a) shortly after first configure (belt-and-suspenders for a
+    /// cold-start fetch that never fired) and (b) whenever the socket connects.
+    private func refetchMessages() {
+        if let user = resolvedUser {
+            messageList.set(user: user)
+        } else if let group = resolvedGroup {
+            messageList.set(group: group)
+        }
+        messageList.reload()
+    }
+
+    private func scheduleRefetch() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            self?.refetchMessages()
+        }
     }
 
     private func showError(_ error: CometChatException?) {
         loadingLabel.text = error?.errorDescription ?? "This conversation is unavailable."
         setChatViews(hidden: true)
+    }
+}
+
+// Re-fetch history when the CometChat socket (re)connects — recovers a message
+// list that mounted before the connection was live and stuck on skeletons.
+// The protocol methods are @objc optional, so only `connected()` is needed.
+extension MessagesViewController: CometChatConnectionDelegate {
+    func connected() {
+        DispatchQueue.main.async { [weak self] in self?.refetchMessages() }
     }
 }

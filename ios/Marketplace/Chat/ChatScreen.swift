@@ -28,9 +28,10 @@ struct ChatScreen: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         // Fallback: if the app-wide connect (MainTabView) hasn't run yet, start it.
+        // connect() is fire-and-forget + idempotent and owns its own Task.
         .task {
             if case .idle = chat.phase {
-                await chat.connect(using: session.api)
+                chat.connect(using: session.api)
             }
         }
     }
