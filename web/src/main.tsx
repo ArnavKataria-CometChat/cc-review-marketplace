@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./App";
 import { AuthProvider } from "./auth/AuthContext";
+import { CometChatProvider } from "./cometchat/CometChatProvider";
 import "./styles.css";
 
 const rootEl = document.getElementById("root");
@@ -13,7 +14,9 @@ createRoot(rootEl).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CometChatProvider>
+          <App />
+        </CometChatProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

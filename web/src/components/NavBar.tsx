@@ -15,6 +15,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Browse" },
+  { to: "/messages", label: "Chat", roles: ["buyer", "seller", "support", "admin"] },
   { to: "/favorites", label: "Favorites", roles: ["buyer"] },
   { to: "/inquiries", label: "My Inquiries", roles: ["buyer"] },
   { to: "/seller/listings", label: "My Listings", roles: ["seller"] },
