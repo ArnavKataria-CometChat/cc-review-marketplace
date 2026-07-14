@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -53,6 +54,22 @@
         <activity
             android:name=".ui.chat.ChatActivity"
             android:theme="@style/Theme.Marketplace.CometChat" />
+
+        <!-- Disable Picture-in-Picture on the CometChat call surfaces. The UIKit
+             declares them with supportsPictureInPicture="true"; because they also
+             declare configChanges=screenSize|screenLayout|orientation, entering
+             PiP (home/minimise during a call) resizes the React-Native/Jitsi call
+             surface to the small PiP window and it never re-measures on return —
+             leaving the call UI stuck in a narrow left strip with the rest black.
+             Override to false so minimise/reopen keeps a full-screen layout. -->
+        <activity
+            android:name="com.cometchat.uikit.kotlin.calls.CometChatCallActivity"
+            android:supportsPictureInPicture="false"
+            tools:replace="android:supportsPictureInPicture" />
+        <activity
+            android:name="com.cometchat.uikit.kotlin.presentation.ongoingcall.ui.CometChatOngoingCallActivity"
+            android:supportsPictureInPicture="false"
+            tools:replace="android:supportsPictureInPicture" />
 
     </application>
 
