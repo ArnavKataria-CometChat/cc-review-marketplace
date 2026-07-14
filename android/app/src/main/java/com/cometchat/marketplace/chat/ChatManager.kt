@@ -93,7 +93,22 @@ object ChatManager {
 
             override fun onActivityResumed(activity: Activity) {
                 topActivity = WeakReference(activity)
-                if (isCometChatCallActivity(activity)) ongoingCallActivity = WeakReference(activity)
+                if (isCometChatCallActivity(activity)) {
+                    ongoingCallActivity = WeakReference(activity)
+                    // The kit's call activities enter PiP on user-leave (their
+                    // onUserLeaveHint calls enterPictureInPictureMode
+                    // unconditionally) and declare configChanges for screen size,
+                    // so on return to full screen the React-Native/Jitsi call
+                    // surface keeps its tiny PiP measurements — the call UI stays
+                    // crammed in a narrow strip. Kick a full re-measure of the
+                    // decor tree once the resume settles.
+                    activity.window?.decorView?.let { decor ->
+                        decor.post {
+                            decor.requestLayout()
+                            decor.invalidate()
+                        }
+                    }
+                }
             }
 
             override fun onActivityStarted(activity: Activity) {}
@@ -119,6 +134,10 @@ object ChatManager {
                 when (event) {
                     is CometChatCallEvent.CallEnded -> {
                         _incomingCall.value = null
+                        // This event = the LOCAL user ended the call from the kit's
+                        // ongoing screen — the call is over; clear it so the
+                        // stale-end guard in reForegroundApp lets us re-foreground.
+                        CometChat.clearActiveCall()
                         reForegroundApp()
                     }
                     is CometChatCallEvent.CallRejected -> _incomingCall.value = null
@@ -284,6 +303,15 @@ object ChatManager {
                 // [A4] The UI Kit's ongoing-call activity does NOT finish when the
                 // REMOTE party ends a 1:1 call (only the LOCAL end fires the event
                 // bus). Tear it down ourselves so we don't leave a ghost call.
+                //
+                // STALE-END GUARD: end messages also arrive for OLD sessions (e.g.
+                // an unanswered ring cancelled by the other side later). Acting on
+                // one while a DIFFERENT call is live tears down / re-foregrounds
+                // over the live call — the "tap call/accept → app jumps back to
+                // the chats page" bug. Only act when the ended session IS the
+                // active one.
+                val active = CometChat.getActiveCall() ?: return
+                if (call?.sessionId != null && call.sessionId != active.sessionId) return
                 _incomingCall.value = null
                 finishOngoingCallActivity()
                 CometChat.clearActiveCall()
@@ -303,6 +331,11 @@ object ChatManager {
     }
 
     private fun reForegroundApp() {
+        // Never yank the app task in front while a call is LIVE: a stale/misordered
+        // "ended" event for an old session would cover the just-opened call screen
+        // with the chats page (REORDER_TO_FRONT brings the whole app task forward).
+        // Legit end paths clear the active call before this runs.
+        if (CometChat.getActiveCall() != null) return
         val context = topActivity?.get() ?: app ?: return
         val intent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
