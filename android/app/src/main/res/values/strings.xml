@@ -23,6 +23,7 @@
 
     <!-- Navigation -->
     <string name="nav_browse">Browse</string>
+    <string name="nav_chat">Chat</string>
     <string name="nav_favorites">Saved</string>
     <string name="nav_inquiries">Inquiries</string>
     <string name="nav_listings">Listings</string>

@@ -48,6 +48,9 @@
         <!-- CometChat chat + call surface. Uses the CometChat theme (its Kotlin
              Views components require CometChatTheme.DayNight attributes). -->
         <activity
+            android:name=".ui.chat.ConversationsActivity"
+            android:theme="@style/Theme.Marketplace.CometChat" />
+        <activity
             android:name=".ui.chat.ChatActivity"
             android:theme="@style/Theme.Marketplace.CometChat" />
 

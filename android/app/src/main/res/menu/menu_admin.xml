@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_users" android:icon="@drawable/ic_group" android:title="@string/nav_users" />
+    <item android:id="@+id/nav_chat" android:icon="@drawable/ic_chat" android:title="@string/nav_chat" />
     <item android:id="@+id/nav_moderation" android:icon="@drawable/ic_store" android:title="@string/nav_moderation" />
     <item android:id="@+id/nav_queue" android:icon="@drawable/ic_gavel" android:title="@string/nav_queue" />
     <item android:id="@+id/nav_audit" android:icon="@drawable/ic_history" android:title="@string/nav_audit" />

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_browse" android:icon="@drawable/ic_browse" android:title="@string/nav_browse" />
+    <item android:id="@+id/nav_chat" android:icon="@drawable/ic_chat" android:title="@string/nav_chat" />
     <item android:id="@+id/nav_favorites" android:icon="@drawable/ic_favorite" android:title="@string/nav_favorites" />
     <item android:id="@+id/nav_inquiries" android:icon="@drawable/ic_inbox" android:title="@string/nav_inquiries" />
     <item android:id="@+id/nav_profile" android:icon="@drawable/ic_person" android:title="@string/nav_profile" />
