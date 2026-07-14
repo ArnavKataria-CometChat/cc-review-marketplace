@@ -1,13 +1,13 @@
-# Marketplace Backend (Phase A)
+# Marketplace Backend
 
 REST API for a peer-to-peer marketplace: buyers and sellers trade items, support
 handles disputes, and admins moderate. Built with **Go + Gin**.
 
-> **Phase A baseline — no chat.** This service intentionally contains no chat,
-> calling, or CometChat code. It provides the domain, real auth, and full RBAC so
-> that a Phase B integration can map each user to a CometChat identity and anchor
-> conversations to inquiries. The seams for that (inquiry threads, dispute
-> flagging, admin content removal) are present and documented in code.
+> **CometChat integrated.** Each app user maps to a CometChat user (RBAC role in
+> `metadata.appRole`), the frontends bootstrap chat/calling with a per-user auth
+> token minted here, and flagged disputes escalate to a buyer+seller+support
+> CometChat group anchored to the inquiry. The fullAccess REST API Key is used
+> **server-side only** — clients only ever receive App ID + Region + auth token.
 
 ## Architecture
 
@@ -53,6 +53,10 @@ Public:
 
 Authenticated (send `Authorization: Bearer <token>`):
 - `GET    /users/me`
+- `POST   /cometchat/token` — provision the caller's CometChat user (role in
+  `metadata.appRole`) and mint a per-user auth token → `{appId, region, uid, authToken}`.
+  Returns `503` when CometChat is not configured. This is the single bootstrap the
+  web/Android/iOS clients call after login to bring up chat + calling.
 - `POST   /listings` — **seller**
 - `PATCH  /listings/:id` — owning seller (edit / mark sold) or admin
 - `POST   /inquiries` — **buyer** (opens/returns the buyer↔seller thread for a listing)
@@ -83,7 +87,13 @@ Copy `.env.example` to `.env`. All config is env-based; no secrets are committed
 | `JWT_SECRET` | `dev-only-insecure-secret-change-me` | JWT signing secret (set a strong value in prod) |
 | `TOKEN_TTL` | `24h` | Session token lifetime |
 | `SEED_DEMO_DATA` | `true` | Seed demo users/listings on startup |
-| `COMETCHAT_APP_ID` / `COMETCHAT_REGION` / `COMETCHAT_API_KEY` | _(empty)_ | Phase B placeholders — unused in Phase A |
+| `COMETCHAT_APP_ID` | _(empty)_ | CometChat App ID (non-secret; sent to clients) |
+| `COMETCHAT_REGION` | _(empty)_ | CometChat region: `us`/`eu`/`in` (non-secret) |
+| `COMETCHAT_REST_API_KEY` | _(empty)_ | **fullAccess** REST key — server-only; provisions users, mints tokens, manages dispute groups. Never ship to a client. |
+| `COMETCHAT_AUTH_KEY` | _(empty)_ | dev-only Auth Key — read for parity but **not used** (the token flow supersedes it) |
+
+Leaving any CometChat var empty runs the API with chat **disabled**: `/cometchat/token`
+returns `503` and dispute escalation is skipped — every other route is unchanged.
 
 ### Seeded demo accounts
 
@@ -126,11 +136,27 @@ curl localhost:8080/admin/users -H "Authorization: Bearer $TOKEN"
 ./verify.sh        # go vet + tests (if go installed) then `docker build`; non-zero on failure
 ```
 
-## Phase B seams (not implemented here)
+## CometChat integration
 
-- **Inquiry** = anchor for a 1:1 buyer↔seller chat + voice call.
-- **Report → flagged inquiry** = escalation into a buyer+seller+support **group**.
-- `Inquiry.Flagged` toggles on report flag/resolve to model that transition.
-- Admin listing removal is the hook for purging associated conversations.
-- CometChat credentials already read from env; a backend-issued token would let
-  the frontend authenticate.
+Server-side only, via the CometChat REST (Chat) API — see `internal/cometchat`.
+
+- **User mapping.** CometChat `uid` = app user id; display name = user name; the
+  app RBAC role is stored in `metadata.appRole` (the top-level `role` is left
+  unset — it must map to a role predefined in the dashboard, whereas metadata is
+  free-form). Provisioning is **just-in-time**: `POST /cometchat/token` creates
+  (or updates) the user, then mints a fresh auth token.
+- **1:1 (Inquiry).** An inquiry is the buyer↔seller anchor; both clients open the
+  same 1:1 conversation/call keyed on the two UIDs. Only the listing's buyer and
+  seller are participants (enforced by the existing inquiry RBAC).
+- **Dispute group.** Flagging a thread-linked report (`PATCH /reports/:id`
+  `status=flagged`) creates a **private** CometChat group `dispute-<inquiryId>`
+  with the buyer + seller (participants) and support (admin/owner). Resolving the
+  report deletes the group. Creation is idempotent (re-flagging is a no-op).
+- **Admin moderation.** Removing a listing (`DELETE /admin/listings/:id`) purges
+  the dispute groups of that listing's flagged inquiries.
+- **Failure isolation.** All CometChat side effects except the token endpoint are
+  best-effort: if CometChat is unreachable the report/listing workflow still
+  succeeds and the error is logged.
+
+The credentials flow: the backend holds the fullAccess REST key; clients receive
+only App ID + Region + a per-user auth token from `POST /cometchat/token`.

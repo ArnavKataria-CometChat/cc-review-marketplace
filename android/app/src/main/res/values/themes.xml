@@ -13,5 +13,13 @@
 
     <style name="Theme.Marketplace.Toolbar" parent="ThemeOverlay.Material3.Dark.ActionBar" />
 
+    <!--
+      CometChat Kotlin Views components reference cometchat* theme attributes that
+      only CometChatTheme.DayNight defines; hosting them under the app's Material3
+      theme crashes at inflation. Scope this theme to the chat/call activities only
+      so the rest of the app keeps its own Material3 look.
+    -->
+    <style name="Theme.Marketplace.CometChat" parent="CometChatTheme.DayNight" />
+
     <style name="Widget.Marketplace.Chip" parent="Widget.Material3.Chip.Filter" />
 </resources>

@@ -89,3 +89,16 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+/**
+ * Bootstrap payload for CometChat, returned by POST /cometchat/token. The
+ * backend provisions the caller's CometChat user and mints a fresh per-user
+ * auth token; the secret REST API key never leaves the server, so the client
+ * only ever sees the non-secret App ID + Region and this short-lived token.
+ */
+export interface CometChatSession {
+  appId: string;
+  region: string;
+  uid: string;
+  authToken: string;
+}

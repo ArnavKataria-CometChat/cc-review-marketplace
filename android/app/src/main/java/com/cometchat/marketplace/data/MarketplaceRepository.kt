@@ -59,6 +59,16 @@ class MarketplaceRepository private constructor(
 
     fun logout() = session.clear()
 
+    // --- CometChat ----------------------------------------------------------
+
+    /**
+     * Fetch the CometChat App ID + Region + a fresh per-user auth token from the
+     * backend. The frontend never holds the CometChat REST key; it logs into the
+     * chat SDK with this token. See [com.cometchat.marketplace.chat.ChatManager].
+     */
+    suspend fun cometChatToken(): Outcome<com.cometchat.marketplace.data.remote.CometChatTokenResponse> =
+        call { api.cometChatToken() }
+
     // --- Listings -----------------------------------------------------------
 
     suspend fun listings(

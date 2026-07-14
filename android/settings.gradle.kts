@@ -17,6 +17,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // CometChat Chat/UIKit + Calls SDKs are published here, not on Maven Central.
+        maven { url = uri("https://dl.cloudsmith.io/public/cometchat/cometchat/maven/") }
     }
 }
 

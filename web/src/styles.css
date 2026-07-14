@@ -707,3 +707,68 @@ label.radio input {
 .modal h2 {
   margin-bottom: 1rem;
 }
+
+/* ── Chat tab (CometChat) ─────────────────────────────────────────────────
+   Two panes: conversation list + the selected thread. Both are height-bounded
+   so the kit's scrollers stay contained (an unbounded ancestor clips the kit
+   list / lets it grow forever). */
+.cc-messages-page {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 120px);
+  min-height: 480px;
+  padding: 12px 0;
+}
+.cc-conversations {
+  flex: 0 0 340px;
+  min-width: 280px;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+.cc-thread {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+/* The kit message list must take the middle and scroll; header/composer are
+   auto-height at top/bottom. */
+.cc-thread > .cometchat-message-list,
+.cc-thread > [class*="cometchat-message-list"] {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.cc-thread-empty {
+  margin: auto;
+  color: var(--muted, #6b7280);
+}
+.cc-conversations > *,
+.cc-conversations [class*="cometchat-conversations"] {
+  height: 100%;
+}
+
+/* Incoming-call overlay: CometChatIncomingCall renders in normal flow (it does
+   not position itself), which dumped the ringing card at the very bottom of the
+   document. Pin it top-right above everything; keep it click-through-free only
+   where the card actually is. */
+.cc-incoming-call-overlay {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 1000;
+  /* The kit card renders position:absolute; left:0; width:360px inside its
+     nearest positioned ancestor — give the anchor that width so right:16px
+     actually right-aligns the card instead of letting it hang off-screen. */
+  width: 360px;
+  max-width: calc(100vw - 32px);
+}
+.cc-incoming-call-overlay .cometchat-incoming-call {
+  max-width: 100%;
+}

@@ -67,11 +67,25 @@ struct ReportDetailView: View {
                     if let buyer = detail.buyer { UserRow(user: buyer) }
                     if let seller = detail.seller { UserRow(user: seller) }
                 }
-                // Phase B seam: support mediates inside a buyer+seller+support group here.
-                Section {
-                    Label("In a future update, support joins a group conversation with the buyer and seller from here.",
-                          systemImage: "person.3")
-                        .font(.footnote).foregroundStyle(.secondary)
+                // Phase B — the dispute group. Once the report is flagged the
+                // backend provisions a buyer+seller+support CometChat group
+                // (GUID `dispute-<inquiryId>`); support mediates inside it with
+                // group chat + group voice/video call.
+                Section("Dispute group") {
+                    if inquiry.flagged {
+                        // [I8] VALUE-based push (destination registered on the
+                        // stack in DisputeQueueView) — survives the Form reloads
+                        // that popped the old inline NavigationLink.
+                        NavigationLink(value: GroupChatRoute(guid: "dispute-\(inquiry.id)")) {
+                            Label("Open group chat & call", systemImage: "person.3.fill")
+                        }
+                        Text("Group conversation with the buyer and seller. Voice & video call buttons are in the chat header.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Label("Flag this report to escalate it into a buyer + seller + support group.",
+                              systemImage: "person.3")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
             }
 

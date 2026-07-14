@@ -53,6 +53,10 @@ interface ApiService {
     @GET("users/me")
     suspend fun me(): Response<User>
 
+    // --- CometChat bootstrap: sync chat identity + mint a per-user auth token ---
+    @POST("cometchat/token")
+    suspend fun cometChatToken(): Response<CometChatTokenResponse>
+
     // --- Inquiries ---
     @POST("inquiries")
     suspend fun createInquiry(@Body body: CreateInquiryRequest): Response<Inquiry>

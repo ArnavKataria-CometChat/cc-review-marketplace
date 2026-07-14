@@ -1,4 +1,4 @@
-# Marketplace — iOS Client (Phase A)
+# Marketplace — iOS Client (Phase A + CometChat)
 
 Native **SwiftUI** app for the peer-to-peer marketplace: buyers browse and
 inquire, sellers list and manage items, support triages disputes, and admins
@@ -96,6 +96,7 @@ variable fractional-second precision). Prices are integer **cents**.
 | `POST /auth/login` `{email,password}` → `{token,user}` | public | Sign in |
 | `POST /auth/register` `{name,email,password,role}` → `{token,user}` | public | Register (buyer/seller) |
 | `GET /users/me` → `User` | any | Session restore, Account |
+| `POST /cometchat/token` → `{appId,region,uid,authToken}` | any | Bring up CometChat chat/calling |
 | `GET /listings?search=&category=&minPrice=&maxPrice=` → `{listings}` | public | Browse |
 | `GET /listings/:id` → `Listing` | public | Listing detail |
 | `POST /listings` `{title,description,priceCents,category,photos}` → `Listing` | seller | Create listing |
@@ -129,9 +130,16 @@ cp .env.example .env
 go run .          # → listening on :8080, seeds demo data
 ```
 
-**2. Run the app** — open `Marketplace.xcodeproj` in Xcode, pick an iOS
-Simulator, and press **Run** (⌘R). The iOS Simulator reaches the Mac's
-`localhost`, so the default base URL works out of the box.
+**2. Install pods** (chat + calling SDKs — `Pods/` is gitignored):
+
+```bash
+pod install
+```
+
+**3. Run the app** — open **`Marketplace.xcworkspace`** (not the `.xcodeproj` —
+CocoaPods rewires the workspace) in Xcode, pick an iOS Simulator, and press
+**Run** (⌘R). The iOS Simulator reaches the Mac's `localhost`, so the default
+base URL works out of the box.
 
 Sign in with a seeded demo account (all use password **`Password123!`**), or tap
 one on the Sign-In screen:
@@ -149,26 +157,42 @@ one on the Sign-In screen:
 ./verify.sh
 ```
 
-`verify.sh` is the CI build gate. It runs a **simulator build with code-signing
-disabled** and exits non-zero on any failure:
+`verify.sh` is the CI build gate. It `pod install`s if needed, then runs a
+**simulator build with code-signing disabled** against the workspace and exits
+non-zero on any failure:
 
 ```bash
-xcodebuild -project Marketplace.xcodeproj -scheme Marketplace \
+xcodebuild -workspace Marketplace.xcworkspace -scheme Marketplace \
   -configuration Debug -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' \
   CODE_SIGNING_ALLOWED=NO clean build
 ```
 
-## Phase B seams (not implemented here)
+## Phase B — CometChat chat + calling
 
-- **Inquiry detail** (`Features/Inquiries/InquiryDetailView.swift`) is where the
-  1:1 buyer↔seller CometChat chat and voice-call button attach, keyed on the
-  inquiry.
-- **Report detail** (`Features/Reports/ReportDetailView.swift`) is where a
-  flagged, thread-linked report becomes a buyer+seller+support **group** that
-  support mediates in.
-- **Admin listing removal** is the hook for purging conversations tied to a
-  removed listing.
-- The signed-in `User.id` + `role` are the stable identity a CometChat user is
-  synced from; the app already authenticates with a backend-issued token, which
-  Phase B would extend to also mint a CometChat auth token.
+Integrated with the **CometChat iOS UI Kit v5** (`CometChatUIKitSwift ~> 5.1`)
+and **Calls SDK 5** (`CometChatCallsSDK ~> 5.0`) via CocoaPods. Chat code lives
+in `Marketplace/Chat/`.
+
+- **No secrets in the app.** The client holds no App ID / Region / keys. On sign
+  in, `ChatService` calls `POST /cometchat/token`, and the backend returns the
+  App ID + Region + a short-lived per-user auth token. `ChatService` then inits
+  the SDKs and logs in with `CometChatUIKit.login(authToken:)`. The REST API Key
+  stays server-side.
+- **1:1 chat + voice/video call** — `InquiryDetailView` pushes a conversation
+  with the other party (`ChatTarget.user(uid:)`, peer = the inquiry's other
+  buyer/seller; CometChat UID == app user id). Call buttons are on the chat
+  header. Gated to the two participants.
+- **Dispute group** — once a report is flagged, the backend provisions a
+  buyer+seller+support group (GUID `dispute-<inquiryId>`). `ReportDetailView`
+  pushes `ChatTarget.group(guid:)` into it for group chat + group calling;
+  support mediates.
+- **Calling glue** — `ChatService` inits `CometChatCalls` right after the chat
+  init, enables the kit's in-app incoming-call overlay, and registers a listener
+  that dismisses the ongoing-call screen + clears the active call when a 1:1 call
+  ends remotely (the kit otherwise leaves a ghost call running).
+- **Native quirks handled** (see `Podfile` / `CometChatStubs/`): the arm64
+  simulator arch exclusion is cleared on all targets; a compile-time stub
+  resolves the never-shipped `CometChatCardsSwift` module; and the real
+  `CometChatStarscream` framework (an undeclared runtime dependency of
+  CometChatSDK) is pulled explicitly so the app doesn't crash at launch.

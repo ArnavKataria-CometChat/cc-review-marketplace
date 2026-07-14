@@ -202,6 +202,17 @@ struct AuthResponse: Codable {
     let user: User
 }
 
+/// Response of `POST /cometchat/token` — everything a client needs to bring up
+/// CometChat: the non-secret App ID + Region and a short-lived, per-user auth
+/// token. The REST API Key never leaves the backend, so it is deliberately
+/// absent here. `uid` is the app user id (CometChat UID == app user id).
+struct CometChatTokenResponse: Codable {
+    let appId: String
+    let region: String
+    let uid: String
+    let authToken: String
+}
+
 struct ListingsEnvelope: Codable { let listings: [Listing] }
 struct InquiriesEnvelope: Codable { let inquiries: [Inquiry] }
 struct FavoritesEnvelope: Codable { let favorites: [FavoriteEntry] }

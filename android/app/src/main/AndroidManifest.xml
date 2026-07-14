@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Voice & video calling (CometChat Calls). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
+    <!-- Ongoing-call foreground service (kit-provided service; permissions must
+         still be declared here — manifest merge does not pull them across AARs). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
 
     <application
         android:name=".MarketplaceApp"
@@ -11,6 +26,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Marketplace"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -29,6 +45,24 @@
         <activity android:name=".ui.listings.CreateListingActivity" />
         <activity android:name=".ui.inquiries.InquiryDetailActivity" />
         <activity android:name=".ui.reports.ReportDetailActivity" />
+
+        <!-- CometChat chat + call surface. Uses the CometChat theme (its Kotlin
+             Views components require CometChatTheme.DayNight attributes). -->
+        <activity
+            android:name=".ui.chat.ConversationsActivity"
+            android:theme="@style/Theme.Marketplace.CometChat" />
+        <activity
+            android:name=".ui.chat.ChatActivity"
+            android:theme="@style/Theme.Marketplace.CometChat" />
+
+        <!-- NOTE on the CometChat call activities + Picture-in-Picture: the UIKit
+             declares them supportsPictureInPicture=true and its onUserLeaveHint
+             calls enterPictureInPictureMode() UNCONDITIONALLY — overriding the
+             flag to false via tools:replace makes that call throw
+             IllegalStateException and CRASHES the app on home-press during a
+             call. So PiP must stay enabled; the PiP-return layout freeze (call
+             UI stuck at PiP size) is instead mitigated by a re-measure kick in
+             ChatManager when a call activity resumes. -->
 
     </application>
 

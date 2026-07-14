@@ -1,5 +1,22 @@
 import SwiftUI
 
+/// [I8] Stable navigation key for a report. Navigating by the whole `Report`
+/// VALUE popped the pushed detail (and any dispute-group chat on top of it) the
+/// moment the report's data changed — flagging or a background `load()` replaces
+/// the Report value, so `navigationDestination(for: Report.self)` lost its key.
+/// Keying on the immutable report id survives those reloads.
+struct ReportRoute: Hashable {
+    let id: String
+}
+
+/// [I8] Stable route for the dispute-group chat. Registered as a
+/// `navigationDestination` at the STACK level (not inline in the reloading report
+/// detail) and pushed by a VALUE-based NavigationLink — so once pushed it lives on
+/// the stack and does not pop when the report detail's Form rebuilds.
+struct GroupChatRoute: Hashable {
+    let guid: String
+}
+
 /// Support/admin dispute queue. Filter by status; tap through for full context.
 struct DisputeQueueView: View {
     @EnvironmentObject private var session: SessionStore
@@ -15,7 +32,7 @@ struct DisputeQueueView: View {
                                description: "No reports match this filter.")
                 } else {
                     List(reports) { report in
-                        NavigationLink(value: report) {
+                        NavigationLink(value: ReportRoute(id: report.id)) {
                             ReportRow(report: report)
                         }
                     }
@@ -23,8 +40,11 @@ struct DisputeQueueView: View {
                 }
             }
             .navigationTitle("Disputes")
-            .navigationDestination(for: Report.self) { report in
-                ReportDetailView(reportId: report.id) { Task { await load() } }
+            .navigationDestination(for: ReportRoute.self) { route in
+                ReportDetailView(reportId: route.id) { Task { await load() } }
+            }
+            .navigationDestination(for: GroupChatRoute.self) { route in
+                ChatScreen(target: .group(guid: route.guid), title: "Dispute")
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

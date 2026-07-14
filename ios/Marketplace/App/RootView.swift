@@ -25,13 +25,30 @@ struct RootView: View {
 struct MainTabView: View {
     let user: User
     @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var chat: ChatService
 
     var body: some View {
+        tabs
+            // Bring up CometChat app-wide once we know who's signed in, so the
+            // kit's incoming-call overlay works from any screen. One-shot per
+            // user id — re-fires only on account switch, not on every re-render
+            // (gotcha I1).
+            .task(id: user.id) {
+                // connect() is fire-and-forget and owns its own Task, so it is NOT
+                // cancelled when this view task is (which used to orphan the SDK
+                // login continuation and hang chat at "Connecting…").
+                chat.connect(using: session.api)
+            }
+    }
+
+    private var tabs: some View {
         TabView {
             switch user.role {
             case .buyer:
                 BrowseView()
                     .tabItem { Label("Browse", systemImage: "magnifyingglass") }
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 FavoritesView()
                     .tabItem { Label("Favorites", systemImage: "heart") }
                 InquiriesView()
@@ -40,16 +57,22 @@ struct MainTabView: View {
             case .seller:
                 MyListingsView()
                     .tabItem { Label("My Listings", systemImage: "tag") }
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 InquiriesView()
                     .tabItem { Label("Inbox", systemImage: "tray.full") }
                 BrowseView()
                     .tabItem { Label("Browse", systemImage: "magnifyingglass") }
 
             case .support:
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 DisputeQueueView()
                     .tabItem { Label("Disputes", systemImage: "exclamationmark.bubble") }
 
             case .admin:
+                ConversationsScreen()
+                    .tabItem { Label("Chat", systemImage: "message") }
                 AdminUsersView()
                     .tabItem { Label("Users", systemImage: "person.2") }
                 AdminListingsView()

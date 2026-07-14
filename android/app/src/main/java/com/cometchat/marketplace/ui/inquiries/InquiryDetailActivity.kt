@@ -14,6 +14,7 @@ import com.cometchat.marketplace.data.Outcome
 import com.cometchat.marketplace.data.model.Inquiry
 import com.cometchat.marketplace.data.remote.CreateReportRequest
 import com.cometchat.marketplace.databinding.ActivityInquiryDetailBinding
+import com.cometchat.marketplace.ui.chat.ChatActivity
 import com.cometchat.marketplace.ui.listings.ListingDetailActivity
 import com.cometchat.marketplace.ui.repo
 import com.cometchat.marketplace.ui.toast
@@ -101,7 +102,30 @@ class InquiryDetailActivity : AppCompatActivity() {
             }
         }
 
+        wireChat(inq)
         buildActions(inq)
+    }
+
+    /**
+     * The CometChat 1:1 seam: only this listing's buyer and seller may chat/call,
+     * and only with each other. Message and Call both open the inquiry's
+     * conversation, whose header hosts the voice + video call buttons.
+     */
+    private fun wireChat(inq: Inquiry) {
+        val me = repo.currentUser?.id
+        val counterpartId = when (me) {
+            inq.buyerId -> inq.sellerId
+            inq.sellerId -> inq.buyerId
+            else -> null
+        }
+        val enabled = !counterpartId.isNullOrBlank()
+        binding.chatButton.isEnabled = enabled
+        binding.callButton.isEnabled = enabled
+        if (enabled) {
+            val open = { ChatActivity.startUser(this, counterpartId!!) }
+            binding.chatButton.setOnClickListener { open() }
+            binding.callButton.setOnClickListener { open() }
+        }
     }
 
     private fun buildActions(inq: Inquiry) {

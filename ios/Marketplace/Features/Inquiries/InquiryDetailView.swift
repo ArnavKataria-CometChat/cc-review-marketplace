@@ -23,6 +23,18 @@ struct InquiryDetailView: View {
         return uid == current.buyerId || uid == current.sellerId
     }
 
+    /// The other party in this inquiry — the person the current user chats/calls.
+    private var peerUID: String? {
+        guard let uid = session.currentUser?.id else { return nil }
+        if uid == current.buyerId { return current.sellerId }
+        if uid == current.sellerId { return current.buyerId }
+        return nil
+    }
+
+    private var peerRoleLabel: String {
+        session.currentUser?.id == current.buyerId ? "the seller" : "the buyer"
+    }
+
     var body: some View {
         Form {
             Section("Listing") {
@@ -54,12 +66,26 @@ struct InquiryDetailView: View {
                 LabeledContent("Opened", value: Format.dateTime(current.createdAt))
             }
 
-            // Phase B seam — chat + voice call live here, anchored to this inquiry.
+            // Phase B — 1:1 chat + voice/video call, anchored to this inquiry.
+            // Only the listing's buyer and seller may converse/call; the peer is
+            // the other party (CometChat UID == app user id).
             Section("Messaging") {
-                Label("Direct messaging and voice calls with the other party arrive in a future update.",
-                      systemImage: "bubble.left.and.bubble.right")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                if isParticipant, let peerUID {
+                    NavigationLink {
+                        ChatScreen(target: .user(uid: peerUID), title: "Chat")
+                    } label: {
+                        Label("Message & call \(peerRoleLabel)",
+                              systemImage: "bubble.left.and.bubble.right")
+                    }
+                    Text("Voice & video call buttons are in the chat header.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Label("Only the buyer and seller on this listing can chat here.",
+                          systemImage: "lock")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if let actionError {

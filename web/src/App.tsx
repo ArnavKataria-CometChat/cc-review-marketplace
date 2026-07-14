@@ -10,6 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { BrowsePage } from "./pages/BrowsePage";
 import { ListingDetailPage } from "./pages/ListingDetailPage";
+import { MessagesPage } from "./pages/MessagesPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
@@ -40,6 +41,16 @@ export function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forbidden" element={<ForbiddenPage />} />
+
+          {/* Chat — any authenticated user (1:1 for buyer/seller, dispute groups for support) */}
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute roles={["buyer", "seller", "support", "admin"]}>
+                <MessagesPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Buyer */}
           <Route

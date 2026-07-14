@@ -1,0 +1,35 @@
+PODS:
+  - CometChatCallsSDK (5.0.1):
+    - CometChatWebRTC (~> 124.0.4)
+  - CometChatSDK (4.1.6)
+  - CometChatStarscream (1.0.2)
+  - CometChatUIKitSwift (5.1.16):
+    - CometChatSDK (~> 4.1)
+  - CometChatWebRTC (124.0.4)
+
+DEPENDENCIES:
+  - CometChatCallsSDK (~> 5.0)
+  - CometChatStarscream (from `CometChatStubs/CometChatStarscream.podspec`)
+  - CometChatUIKitSwift (~> 5.1)
+
+SPEC REPOS:
+  trunk:
+    - CometChatCallsSDK
+    - CometChatSDK
+    - CometChatUIKitSwift
+    - CometChatWebRTC
+
+EXTERNAL SOURCES:
+  CometChatStarscream:
+    :podspec: CometChatStubs/CometChatStarscream.podspec
+
+SPEC CHECKSUMS:
+  CometChatCallsSDK: cd0899159efec0b9679fbf36f9d2856c9af14b03
+  CometChatSDK: 3ea0874f01dc56fa9972db0fceb6fb962dee41f5
+  CometChatStarscream: beab1a3ddfdf3ec726ccab4a4c87633e1884b155
+  CometChatUIKitSwift: 117da16f0a6740076bf678d37eef55124bc9e832
+  CometChatWebRTC: 45d400d7f0135ab3923d6b4291715b61582e8c46
+
+PODFILE CHECKSUM: cc7b0ee3b4c9156936e655378ae81793b4a6fa69
+
+COCOAPODS: 1.16.2

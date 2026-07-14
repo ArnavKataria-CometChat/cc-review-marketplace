@@ -47,5 +47,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- CometChat voice/video calling (CometChatCallsSDK) needs camera + mic. -->
+	<key>NSCameraUsageDescription</key>
+	<string>So you can be seen during video calls about a listing.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>So you can talk during voice and video calls about a listing.</string>
+	<!-- Keep call audio alive when the app is backgrounded mid-call. (No "voip":
+	     this build has no PushKit, so declaring it would fail App Store review.) -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>
