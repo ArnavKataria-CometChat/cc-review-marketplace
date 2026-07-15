@@ -157,6 +157,18 @@ final class MessagesViewController: UIViewController {
             resolvedGroup = group
             resolvedUser = nil
             header.set(group: group)
+            // [I10 WORKAROUND — verification aid only; SDK gap stays recorded]
+            // CometChatUIKitSwift SIGSEGVs rendering a GROUP-call message bubble
+            // (CometChatCallBubble.setupStyle -> CallType rawValue on null), so a
+            // dispute group containing any call message crashes the app on open.
+            // Group calls travel as CUSTOM "meeting" messages (not category
+            // "call"), and both routes render through CometChatCallBubble — skip
+            // BOTH template categories for GROUP threads only; 1:1 call bubbles
+            // render fine and stay enabled.
+            let templates = CometChatUIKit.getDataSource()
+                .getAllMessageTemplates(additionalConfiguration: nil)
+                .filter { $0.category != "call" && $0.category != "custom" }
+            messageList.set(templates: templates)
             messageList.set(group: group)
             composer.set(group: group)
         }

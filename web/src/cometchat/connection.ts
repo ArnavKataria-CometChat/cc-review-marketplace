@@ -65,6 +65,7 @@ export async function connectCometChat(): Promise<string> {
     } catch {
       /* ignore */
     }
+    installCallLifecycleGuards();
     connectedUid = token.uid;
     return token.uid;
   })();
@@ -73,6 +74,36 @@ export async function connectCometChat(): Promise<string> {
   } finally {
     inFlight = null;
   }
+}
+
+// [W11] Release call sessions so a dropped client can't wedge the pair BUSY.
+// Without these, NO code path ever calls CometChat.endCall/clearActiveCall
+// after a call ends abnormally: a tab close (or crashed/killed browser) leaves
+// the session ongoing server-side and every subsequent call to either party is
+// instantly auto-rejected "Call Busy" until the zombie expires. Web analog of
+// the catalog's I4 (iOS) / A4 (Android) ghost-call entries.
+let lifecycleInstalled = false;
+function installCallLifecycleGuards(): void {
+  if (lifecycleInstalled) return;
+  lifecycleInstalled = true;
+  CometChat.addCallListener(
+    "marketplace.call.lifecycle",
+    new CometChat.CallListener({
+      onIncomingCallCancelled: () => {
+        try { CometChat.clearActiveCall(); } catch { /* ignore */ }
+      },
+      onCallEndedMessageReceived: () => {
+        try { CometChat.clearActiveCall(); } catch { /* ignore */ }
+      },
+    }),
+  );
+  // Best-effort server-side release when the page goes away mid-call.
+  window.addEventListener("beforeunload", () => {
+    try {
+      const active = CometChat.getActiveCall();
+      if (active) void CometChat.endCall(active.getSessionId());
+    } catch { /* ignore */ }
+  });
 }
 
 /** Log the current user out of CometChat (best-effort) — call on app logout. */
