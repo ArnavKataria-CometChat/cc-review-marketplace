@@ -215,11 +215,12 @@ object ChatManager {
      * Only fires when NO live ongoing-call activity exists — a real in-progress
      * call is never touched. Safe to call opportunistically.
      */
-    fun endHangingCall(reason: String) {
+    fun endHangingCall(reason: String, protectSid: String? = null) {
         val active = CometChat.getActiveCall() ?: return
         val ongoing = ongoingCallActivity?.get()
         if (ongoing != null && !ongoing.isFinishing) return  // real live call — leave it
         val sid = active.sessionId
+        if (protectSid != null && sid == protectSid) return  // NEVER end the fresh call
         Log.i(TAG, "ending hanging ghost call ($reason): session=$sid")
         if (!sid.isNullOrBlank()) {
             CometChat.endCall(sid, object : CometChat.CallbackListener<Call>() {
@@ -304,8 +305,15 @@ object ChatManager {
                 // isn't auto-rejected busy and the accept isn't torn down by the
                 // ghost's late end-event (the "call cuts the instant I pick up").
                 val active = CometChat.getActiveCall()
-                if (active != null && active.sessionId != call?.sessionId) {
-                    endHangingCall("incoming-ring sweep")
+                val incomingSid = call?.sessionId
+                val activeSid = active?.sessionId
+                // Sweep ONLY when both session ids exist and genuinely differ —
+                // a missing id must never read as a mismatch (that ended the
+                // very call that was ringing: "call not initialising").
+                if (!incomingSid.isNullOrBlank() && !activeSid.isNullOrBlank() &&
+                    activeSid != incomingSid
+                ) {
+                    endHangingCall("incoming-ring sweep", protectSid = incomingSid)
                 }
                 // Surface the ringing call so ChatActivity can SHOW the (otherwise
                 // GONE) CometChatIncomingCall overlay. The widget does not gate

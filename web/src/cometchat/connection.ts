@@ -81,16 +81,19 @@ export async function connectCometChat(): Promise<string> {
  * clearActiveCall. Never touches a REAL in-progress call — the kit's
  * ongoing-call surface being mounted is the liveness signal.
  */
-export async function endHangingCall(reason: string): Promise<void> {
+export async function endHangingCall(reason: string, protectSid?: string): Promise<void> {
   try {
     const active = CometChat.getActiveCall();
     if (!active) return;
     const liveSurface = document.querySelector(
-      ".cometchat-ongoing-call, [class*='cometchat-ongoing-call']");
-    if (liveSurface) return; // a real call is on screen — leave it alone
-    const sid = active.getSessionId?.();
+      ".cometchat-ongoing-call, [class*='cometchat-ongoing-call'], " +
+      ".cometchat-outgoing-call, .cometchat-incoming-call");
+    if (liveSurface) return; // ANY live call UI (ringing included) — leave it alone
+    const sid = active.getSessionId?.() ?? (active as { sessionId?: string }).sessionId;
+    if (!sid) { CometChat.clearActiveCall(); return; }
+    if (protectSid && sid === protectSid) return; // NEVER end the fresh call
     console.log(`[cometchat] ending hanging ghost call (${reason}): ${sid}`);
-    if (sid) await CometChat.endCall(sid).catch(() => undefined);
+    await CometChat.endCall(sid).catch(() => undefined);
     CometChat.clearActiveCall();
   } catch { /* ignore */ }
 }
@@ -106,10 +109,16 @@ function installCallLifecycleGuards(): void {
       // this call isn't auto-rejected busy / cut on accept.
       onIncomingCallReceived: (call: unknown) => {
         try {
+          const c = call as { getSessionId?: () => string; sessionId?: string };
+          const incomingSid = c?.getSessionId?.() ?? c?.sessionId;
           const active = CometChat.getActiveCall();
-          const incomingSid = (call as { getSessionId?: () => string })?.getSessionId?.();
-          if (active && active.getSessionId?.() !== incomingSid) {
-            void endHangingCall("incoming-ring sweep");
+          const activeSid = active?.getSessionId?.()
+            ?? (active as { sessionId?: string } | null)?.sessionId;
+          // Sweep ONLY when both ids exist and genuinely differ — a missing id
+          // must never be treated as a mismatch (that killed fresh calls: the
+          // sweep ended the very call that was ringing).
+          if (incomingSid && activeSid && activeSid !== incomingSid) {
+            void endHangingCall("incoming-ring sweep", incomingSid);
           }
         } catch { /* ignore */ }
       },
