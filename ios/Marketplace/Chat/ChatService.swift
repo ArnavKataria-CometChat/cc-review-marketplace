@@ -174,6 +174,23 @@ final class ChatService: ObservableObject {
         //    active call on ccCallEnded/ccCallRejected (gotcha I4).
         CometChatCallEvents.addListener(callListenerID, callListener)
 
+        // 4. [I12] Release the call session SERVER-SIDE when the app terminates
+        //    mid-call. clearActiveCall() is client-local only: an app killed
+        //    during a call leaves the session ongoing server-side, wedging this
+        //    user-pair BUSY (every subsequent call insta-rejects) until the
+        //    zombie expires — the "connects sometimes, then doesn't" symptom.
+        //    Best-effort: willTerminate can't cover a force-kill; the durable
+        //    fix belongs in the SDK/skill (recorded as I12).
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willTerminateNotification,
+            object: nil, queue: .main
+        ) { _ in
+            if let active = CometChat.getActiveCall(),
+               let sid = active.sessionID, !sid.isEmpty {
+                CometChat.endCall(sessionID: sid) { _ in } onError: { _ in }
+            }
+        }
+
         didInitSDK = true
     }
 
