@@ -54,17 +54,11 @@ export async function connectCometChat(): Promise<string> {
       await CometChatUIKit.logout().catch(() => undefined);
     }
     await CometChatUIKit.loginWithAuthToken(token.authToken);
-    // Clear any STALE/ghost active call left from a previous page/session. If the
-    // SDK still holds an active call (e.g. a call surface that wasn't torn down),
-    // this user is reported BUSY and every new incoming call auto-rejects as "Call
-    // Busy" — the "call disconnects the moment it's initiated" symptom. A fresh
-    // login can't have a legitimate active call, so clear it. (A page reload then
-    // fixes a stuck-busy user.)
-    try {
-      if (CometChat.getActiveCall()) CometChat.clearActiveCall();
-    } catch {
-      /* ignore */
-    }
+    // [GHOST-SWEEP] End any STALE/ghost active call left from a previous
+    // page/session — SERVER-SIDE too (clearActiveCall alone is client-local).
+    // A hanging ghost reports this user BUSY: fresh rings auto-reject and an
+    // accepted call is torn down instantly by the ghost's late end-event.
+    await endHangingCall("connect-time sweep");
     installCallLifecycleGuards();
     connectedUid = token.uid;
     return token.uid;
@@ -82,6 +76,25 @@ export async function connectCometChat(): Promise<string> {
 // the session ongoing server-side and every subsequent call to either party is
 // instantly auto-rejected "Call Busy" until the zombie expires. Web analog of
 // the catalog's I4 (iOS) / A4 (Android) ghost-call entries.
+/**
+ * [GHOST-SWEEP] End a hanging/ghost call: server-side endCall + local
+ * clearActiveCall. Never touches a REAL in-progress call — the kit's
+ * ongoing-call surface being mounted is the liveness signal.
+ */
+export async function endHangingCall(reason: string): Promise<void> {
+  try {
+    const active = CometChat.getActiveCall();
+    if (!active) return;
+    const liveSurface = document.querySelector(
+      ".cometchat-ongoing-call, [class*='cometchat-ongoing-call']");
+    if (liveSurface) return; // a real call is on screen — leave it alone
+    const sid = active.getSessionId?.();
+    console.log(`[cometchat] ending hanging ghost call (${reason}): ${sid}`);
+    if (sid) await CometChat.endCall(sid).catch(() => undefined);
+    CometChat.clearActiveCall();
+  } catch { /* ignore */ }
+}
+
 let lifecycleInstalled = false;
 function installCallLifecycleGuards(): void {
   if (lifecycleInstalled) return;
@@ -89,6 +102,17 @@ function installCallLifecycleGuards(): void {
   CometChat.addCallListener(
     "marketplace.call.lifecycle",
     new CometChat.CallListener({
+      // [GHOST-SWEEP] a fresh ring while a ghost hangs: end the ghost NOW so
+      // this call isn't auto-rejected busy / cut on accept.
+      onIncomingCallReceived: (call: unknown) => {
+        try {
+          const active = CometChat.getActiveCall();
+          const incomingSid = (call as { getSessionId?: () => string })?.getSessionId?.();
+          if (active && active.getSessionId?.() !== incomingSid) {
+            void endHangingCall("incoming-ring sweep");
+          }
+        } catch { /* ignore */ }
+      },
       onIncomingCallCancelled: () => {
         try { CometChat.clearActiveCall(); } catch { /* ignore */ }
       },

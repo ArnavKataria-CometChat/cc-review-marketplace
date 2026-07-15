@@ -94,14 +94,20 @@ final class ChatService: ObservableObject {
                 try await login(authToken: token.authToken)
             }
 
-            // Clear any STALE active call left over from a previous session/crash.
-            // If getActiveCall() is non-nil the SDK thinks we're still in a call and
-            // auto-rejects every new incoming call as "Call Busy". A fresh login can
-            // never have a legitimately-active call, so clear it.
+            // [GHOST-SWEEP] End any STALE active call left over from a previous
+            // session/crash — SERVER-SIDE too (clearActiveCall alone is client-
+            // local). A hanging ghost reports this user BUSY: fresh rings
+            // auto-reject and an accepted call is torn down instantly by the
+            // ghost's late end-event. A fresh connect can never have a
+            // legitimately-active call, so this is always safe here.
             // NOTE: do NOT call CometChat.connect() here — the UIKit login already
             // establishes the socket WITH the presence subscription; a second
             // explicit connect() re-established it WITHOUT presence, which broke
             // presence sync (peer showed "Offline") and call signalling.
+            if let ghost = CometChat.getActiveCall(),
+               let sid = ghost.sessionID, !sid.isEmpty {
+                CometChat.endCall(sessionID: sid) { _ in } onError: { _ in }
+            }
             CometChat.clearActiveCall()
 
             connectedUID = token.uid

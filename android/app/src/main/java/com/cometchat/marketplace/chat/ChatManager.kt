@@ -198,8 +198,37 @@ object ChatManager {
         initCallsSdk(context.applicationContext, token.appId, token.region)
 
         val loggedIn = CometChatUIKit.getLoggedInUser()?.uid == token.uid || loginWithToken(token.authToken)
-        if (loggedIn) registerCallListener()
+        if (loggedIn) {
+            registerCallListener()
+            // [GHOST-SWEEP] A session that just became ready can never have a
+            // LEGITIMATE active call — anything getActiveCall() returns is a
+            // hanging ghost from an abnormal end. End it SERVER-SIDE too
+            // (clearActiveCall alone is client-local), or the pair stays wedged
+            // "Call Busy" and the next accepted call is torn down instantly.
+            endHangingCall("connect-time sweep")
+        }
         return loggedIn
+    }
+
+    /**
+     * End a hanging/ghost call: server-side endCall + local clearActiveCall.
+     * Only fires when NO live ongoing-call activity exists — a real in-progress
+     * call is never touched. Safe to call opportunistically.
+     */
+    fun endHangingCall(reason: String) {
+        val active = CometChat.getActiveCall() ?: return
+        val ongoing = ongoingCallActivity?.get()
+        if (ongoing != null && !ongoing.isFinishing) return  // real live call — leave it
+        val sid = active.sessionId
+        Log.i(TAG, "ending hanging ghost call ($reason): session=$sid")
+        if (!sid.isNullOrBlank()) {
+            CometChat.endCall(sid, object : CometChat.CallbackListener<Call>() {
+                override fun onSuccess(p0: Call?) { CometChat.clearActiveCall() }
+                override fun onError(e: CometChatException?) { CometChat.clearActiveCall() }
+            })
+        } else {
+            CometChat.clearActiveCall()
+        }
     }
 
     /** Log the current user out of CometChat (best-effort) — call on app logout. */
@@ -270,6 +299,14 @@ object ChatManager {
         callListenerRegistered = true
         CometChat.addCallListener(CALL_LISTENER_ID, object : CometChat.CallListener() {
             override fun onIncomingCallReceived(call: Call?) {
+                // [GHOST-SWEEP] If a stale active call is hanging (and no real
+                // ongoing-call activity is live), end it NOW so this fresh ring
+                // isn't auto-rejected busy and the accept isn't torn down by the
+                // ghost's late end-event (the "call cuts the instant I pick up").
+                val active = CometChat.getActiveCall()
+                if (active != null && active.sessionId != call?.sessionId) {
+                    endHangingCall("incoming-ring sweep")
+                }
                 // Surface the ringing call so ChatActivity can SHOW the (otherwise
                 // GONE) CometChatIncomingCall overlay. The widget does not gate
                 // itself, so we drive its visibility off this state.
