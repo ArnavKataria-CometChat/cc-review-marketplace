@@ -10,7 +10,7 @@
 // surface) throw "uiKitSettings not available" and calls never connect. Init MUST
 // complete before any CometChat component mounts (callers gate on connect()).
 
-import { CometChatUIKit, UIKitSettingsBuilder } from "@cometchat/chat-uikit-react";
+import { CometChatUIKit, UIKitSettingsBuilder, CometChatCallEvents } from "@cometchat/chat-uikit-react";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { getCometChatToken } from "../api/endpoints";
 
@@ -130,6 +130,16 @@ function installCallLifecycleGuards(): void {
       },
     }),
   );
+  // [CALL-END HYGIENE] The SDK CallListener above only covers REMOTE events.
+  // When the LOCAL user presses End, neither fires — activeCall lingered on
+  // the ender's side and busy-rejected the NEXT call ("one call works, after
+  // that it doesn't"). The kit's own event bus fires on the LOCAL side too.
+  CometChatCallEvents.ccCallEnded.subscribe(() => {
+    try { CometChat.clearActiveCall(); } catch { /* ignore */ }
+  });
+  CometChatCallEvents.ccCallRejected.subscribe(() => {
+    try { CometChat.clearActiveCall(); } catch { /* ignore */ }
+  });
   // Best-effort server-side release when the page goes away mid-call.
   window.addEventListener("beforeunload", () => {
     try {
